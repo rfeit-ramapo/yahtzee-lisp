@@ -114,35 +114,36 @@
 )
 
 ; open file
-(defun openSerializationFile ()
+(defun openSerializationFile (&optional errorMessage)
     (let 
         ((filestream (open (read-line) :if-does-not-exist nil)))
         (cond (filestream filestream)
-              (t ((princ "Error: Could not open file. Please try again.") (openSerializationFile)))
+              (t 
+              (princ "Error: Could not open file. Please try again.")
+              (terpri)
+              (openSerializationFile t))
         )
     )
 )
 
 ; get file contents
-(defun getFileContents ()
+(defun getFileContents (&optional errorMessage)
     (let
         ((fileContents (read (openSerializationFile))))
-        (cond
-            ((cond 
-                ; the file is not a list
-                ((not (listp fileContents)) 
-                    (princ "Error: Invalid file format Please try again.") (getFileContents))
-                ; the first value is not an integer
-                ((not (integerp (first fileContents)))
-                    (princ "Error: Invalid file format Please try again.") (getFileContents))
-                ; the second value of the list is not a list
-                ((not (listp (second fileContents)))
-                    (princ "Error: Invalid file format Please try again.") (getFileContents))
-                ; basic checks complete
-                ; validate the list of categories
-                (t (validateCategories (second fileContents) 0))
-            ) (princ "Successfully loaded file!") (terpri) fileContents)
-            (t nil)
+        (cond 
+            ; the file is not a list
+            ((and 
+                (listp fileContents)
+                (integerp (first fileContents))
+                (listp (second fileContents))
+                (validateCategories (second fileContents) 0)
+            ) 
+            fileContents)
+
+            (t 
+            (princ "Error: Invalid file format. Please try again.")
+            (terpri)
+            (getFileContents t))
         )
     )
 )
@@ -151,16 +152,24 @@
 (defun loadFile ()
     (princ "Please input the name of the file to load from.")
     (terpri)
-    (getFileContents)
+    (let ((fileContents (getFileContents)))
+        (princ "Successfully loaded file!")
+        (terpri)
+        (terpri)
+        fileContents
+    )
 )
 
 ; validate yes no
-(defun validateYesNo ()
+(defun validateYesNo (&optional errorMessage)
     (let 
         ((input (read-line)))
-        (cond ((equalp input "y") (terpri) t)
-              ((equalp input "n") (terpri) NIL)
-              (t (princ "Error: Input must be 'y' or 'n'. Please try again.") (validateYesNo))
+        (cond ((equalp input "y") t)
+              ((equalp input "n") NIL)
+              (t 
+              (princ "Error: Input must be 'y' or 'n'. Please try again.")
+              (terpri)
+              (validateYesNo))
         )
     )
 )
