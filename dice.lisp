@@ -211,3 +211,15 @@
 ; ********************************************************************* */
 (defun replace-free-dice (dice replacements)
     (add-dice (filter-locked-dice dice) replacements))
+
+; /* *********************************************************************
+; Function Name: sum-dice
+; Purpose: Sum a list of dice
+; Parameters:
+;           dice, the set of dice
+; Return Value: the sum of all face values of the dice set
+; Reference: none
+; ********************************************************************* */
+(defun sum-dice (dice)
+    (cond ((null dice) 0)
+          (t (+ (first (first dice)) (sum-dice (rest dice))))))

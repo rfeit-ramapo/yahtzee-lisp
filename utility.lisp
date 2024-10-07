@@ -26,3 +26,14 @@
     (cond ((null l) 0)
           (t (+ 1 (list-size (rest l))))))
 
+; /* *********************************************************************
+; Function Name: max-list
+; Purpose: Get the maximum value in a list of positive numbers
+; Parameters:
+;           l, the list to get the max value from
+; Return Value: the maximum value in the list, or 0
+; Reference: none
+; ********************************************************************* */
+(defun max-list (l)
+    (cond ((null l) 0)
+          (t (max (first l) (max-list (rest l))))))
