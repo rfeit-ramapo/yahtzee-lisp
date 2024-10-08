@@ -94,6 +94,38 @@
                  (count-dice-faces dice (+ initial-face 1))))))
 
 ; /* *********************************************************************
+; Function Name: expand-dice-face
+; Purpose: Expand a given face into a list of individual dice based on the count
+; Parameters: 
+;           count, an integer representing how many dice of this face exist
+;           face, the value of the face to expand
+; Return Value: a list of dice represented by (face nil) for each die
+; Reference: Received help from ChatGPT to write function, then edited
+; ********************************************************************* */
+(defun expand-dice-face (count face)
+  (cond
+    ; Base case: no more dice to expand
+    ((= count 0) nil)
+    ; Recursive case: prepend the current face and recurse with one less count
+    (t (cons (list face nil) (expand-dice-face (- count 1) face)))))
+
+; /* *********************************************************************
+; Function Name: counts-to-dice
+; Purpose: Convert a list of dice counts into a list of individual dice
+; Parameters: 
+;           counts, a list representing the counts of each face [0-5]
+; Return Value: a list of individual dice, where each die is (face nil)
+; Reference: Received help from ChatGPT to write function, then edited
+; ********************************************************************* */
+(defun counts-to-dice (counts &optional (face 1))
+  (cond
+    ; Base case: no more faces to process
+    ((null counts) nil)
+    ; Recursive case: expand the current face count and concatenate with the rest
+    (t (append (expand-dice-face (first counts) face) 
+               (counts-to-dice (rest counts) (+ face 1))))))
+
+; /* *********************************************************************
 ; Function Name: total-unscored-dice
 ; Purpose: Count how many dice are unscored for a single face
 ; Parameters: 
@@ -223,3 +255,55 @@
 (defun sum-dice (dice)
     (cond ((null dice) 0)
           (t (+ (first (first dice)) (sum-dice (rest dice))))))
+
+; /* *********************************************************************
+; Function Name: count-scored-dice
+; Purpose: Get the dice that would score, or are locked from a set of dice counts
+; Parameters: 
+;           dice-counts, a list of integers for each die face that represent how many there are
+;           locked-counts, a list of integers for each die face that represent how many are locked
+;           scoring-counts, a list of integers for each die face that represent what would score
+; Return Value: a list of dice counts for each face that contribute to a score, or are locked
+; Reference: I got help from ChatGPT to provide test cases for this function
+; ********************************************************************* */
+(defun count-scored-locked-dice (dice-counts locked-counts scoring-counts)
+    (cond
+        ; Base case: last dice count in lists
+        ((null (rest dice-counts)) 
+         ; Make a list with number of scoring (or locked) dice
+         (list 
+           (max 
+            (first locked-counts) 
+            (total-scored-dice (first dice-counts) (first scoring-counts)))))
+
+        ; Recursive case: add to the list of scoring (or locked) dice
+        (t (cons 
+            (max 
+              (first locked-counts) 
+              (total-scored-dice (first dice-counts) (first scoring-counts)))
+            (count-scored-locked-dice (rest dice-counts) (rest locked-counts) (rest scoring-counts))))))
+
+; /* *********************************************************************
+; Function Name: match-counts
+; Purpose: Match the current dice counts to the target, determining which dice are needed
+; Parameters: 
+;           dice-counts, a list of integers for each die face that represent how many there are
+;           target-counts, a list of integers for each die face that represent what scores
+;           reroll-list, an optional parameter indicating which dice need to be rerolled
+;           curr-face, an optional parameter indicating what face value to start at
+; Return Value: a list of dice needed, with sublists specifying the face and number required
+; Reference: I got help from ChatGPT to provide test cases for this function
+; ********************************************************************* */
+(defun match-counts (dice-counts target-counts &optional (reroll-list '()) (curr-face 1))
+    ; If all dice have been checked, return num-rerolls.
+    (cond ((null dice-counts) reroll-list)
+          ; Otherwise, alter num-rerolls based on how many are needed for this face.
+          (t 
+           (match-counts 
+            (rest dice-counts) 
+            (rest target-counts) 
+            ; Update the reroll list based on the target and current dice for this face value.
+            (let ((num-rerolls (- (first target-counts) (first dice-counts))))
+                 (cond ((> num-rerolls 0) (cons (list curr-face num-rerolls) reroll-list))
+                       (t reroll-list)))
+            (+ curr-face 1)))))

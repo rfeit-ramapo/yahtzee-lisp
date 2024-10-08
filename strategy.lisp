@@ -130,5 +130,126 @@
         ; Return a list representing the strategy.
         (list current-score max-score to-reroll target name)))
 
+; /* *********************************************************************
+; Function Name: find-streak
+; Purpose: To determine whether a set of dice has a requisite "streak" (face values in a row)
+; Parameters:
+;           dice-counts, the counts of each face value for this dice set
+;           streak-needed, the number of values in a row required
+;           streak, an optional paramter defining the current streak value
+; Return Value: t if the streak-needed was met, and nil if not
+; Reference: none
+; ********************************************************************* */
+(defun find-streak (dice-counts streak-needed &optional (streak 0))
+    (cond 
+        ; If the streak reached the required amount, return true.
+        ((= streak streak-needed) t)
+        ; If there are no more dice to check, and streak-needed was not reached, return nil.
+        ((null dice-counts) nil)
+        ; If there are dice for this face value, continue the streak.
+        ((>= (first dice-counts) 1) (find-streak (rest dice-counts) streak-needed (+ streak 1)))
+        ; If there are no dice for this face value, restart the streak.
+        (t (find-streak (rest dice-counts) streak-needed))))
+
+; /* *********************************************************************
+; Function Name: score-straight
+; Purpose: To score a dice set for a Straight category (4 or 5 Straight)
+; Parameters:
+;           dice, the dice set to score
+;           streak-num, the number needed in a row to make this Straight
+;           value, the points value of this category if filled
+; Return Value: an integer representing the score obtained from this dice set
+; Reference: none
+; ********************************************************************* */
+(defun score-straight (dice straight-num value)
+    (cond 
+        ; If the requisite streak was met, this scores.
+        ((find-streak (count-dice-faces dice) straight-num) value)
+        ; Otherwise, this earns no points.
+        (t 0)))
+
+; /* *********************************************************************
+; Function Name: check-straight-config
+; Purpose: To evaluate if the current dice configuration can complete 
+;          a 4- or 5-straight
+; Parameters:
+;             dice, a list of dice. Each die is represented as a pair 
+;               of values (face value, lock status).
+;             straight-num, an integer. It indicates the length of the straight 
+;               to check (either 4 or 5).
+;             point-value, an integer. It is the score value for completing 
+;               the straight (30 for 4-straight, 40 for 5-straight).
+;             config, a list of integers. It represents the required counts 
+;               of each die face for a valid straight.
+; Return Value: A list containing:
+;             - The number of rerolls required
+;             - The dice to reroll, if necessary
+;             - The updated dice configuration
+;             If the straight cannot be completed, the function returns nil.
+; Algorithm:
+;             1) Count the number of dice for each face in the current dice set.
+;             2) Identify which dice are free to reroll based on the input config.
+;             3) Find the counts of dice that are scoring or locked.
+;             4) Create a set of unchangeable dice.
+;             5) Determine the number of rerolls needed.
+;             6) Try to add the necessary dice to complete the straight.
+;             7) If the straight is completed, return the reroll information 
+;                and updated dice; otherwise, return nil.
+; Reference: Received help from ChatGPT for getting test cases & header documentation
+; ********************************************************************* */
+(defun check-straight-config (dice straight-num point-value config)
+    (let* 
+        ; Get the counts for each face of the dice set.
+        ((counts (count-dice-faces dice))
+        ; Get which to reroll based on the current dice and input config.
+        (to-reroll (count-free-unscored-dice dice config))
+        ; Find counts of which dice are either already scoring, or are locked.
+        (scoring-or-locked 
+            (count-scored-locked-dice 
+                counts
+                (count-dice-faces (filter-locked-dice dice)) 
+                config))
+        ; Turn scoring-or-locked into a list of dice that cannot be altered.
+        (set-list (counts-to-dice scoring-or-locked))
+        ; Rerolls required is 5 (total dice) - length of the set list.
+        (num-rerolls (- 5 (length set-list)))
+        ; Find which dice need to be added to complete the configuration.
+        (replacements (match-counts counts config))
+        ; Add the required dice to the list if possible.
+        (target (add-dice set-list replacements)))
+
+        ; Return dice counts to reroll, target counts, and rerolls needed, or NIL if impossible.
+        (cond 
+            ((> (score-straight target straight-num point-value) 0)
+                (list num-rerolls to-reroll (count-dice-faces target)))
+            (t nil))))
+
+;(defun check-five-straight-configs (dice)
+;    (let
+;        ((config1 ))))
+
+; to do next:
+; check-five-straight and check-four-straight functions (for each config, then choose the best)
+; now have them return the best one (lowest num rerolls)
+; strategize function will take this info, distribute it to proper vars, then calculate max-score from this
+; finally, have it return a strategy or NIL
+
+; /* *********************************************************************
+; Function Name: strategize-straight
+; Purpose: To create a strategy for a straight category
+; Parameters:
+;           dice, the dice set to strategize for
+;           straight-num, the number in a row needed (4 or 5)
+;           value, the point value of this category
+;           name, the name of the category
+; Return Value: a strategy to score for this category (or nil if impossible)
+; Reference: none
+; ********************************************************************* */
+(defun strategize-straight (dice straight-num value name)
+    (let* 
+        ; Get the score given the current dice set.
+        ((current-score (score-straight dice straight-num value))
+        ; Determine what should be rerolled based on free, unscoring dice and target values.
+        )))
 
 ; STRATEGY ROUTING NOTE: USE THIS FUNCTION TO SKIP FULL CATEGORIES, OR IF ALL DICE ARE LOCKED.
