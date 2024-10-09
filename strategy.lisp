@@ -4,6 +4,8 @@
 ;       dice.lisp
 ;       utility.lisp
 ; ********************************************* */
+(load "utility.lisp")
+(load "dice.lisp")
 
 ; /* *********************************************************************
 ; Function Name: score-multiples
@@ -53,7 +55,7 @@
         (max-score (score-multiples target-list multiple-num)))
 
         ; Return a list representing the strategy.
-        (list current-score max-score to-reroll target name)))
+        (cond ((= 0 max-score) nil) (t (list current-score max-score to-reroll target name)))))
 
 ; /* *********************************************************************
 ; Function Name: score-kind
@@ -202,7 +204,9 @@
         ; Get the counts for each face of the dice set.
         ((counts (count-dice-faces dice))
         ; Get which to reroll based on the current dice and input config.
-        (to-reroll (count-free-unscored-dice dice config))
+        (to-reroll (cond 
+            ((> (score-straight dice straight-num point-value) 0) '(0 0 0 0 0 0))
+            (t (count-free-unscored-dice dice config))))
         ; Find counts of which dice are either already scoring, or are locked.
         (scoring-or-locked 
             (count-scored-locked-dice 
@@ -224,15 +228,98 @@
                 (list num-rerolls to-reroll (count-dice-faces target)))
             (t nil))))
 
-;(defun check-five-straight-configs (dice)
-;    (let
-;        ((config1 ))))
+; /* *********************************************************************
+; Function Name: check-five-straight-configs
+; Purpose: To evaluate the current dice configuration for completing 
+;          a 5-straight
+; Parameters:
+;             dice, a list of dice. Each die is represented as a pair 
+;               of values (face value, lock status).
+; Return Value: A list containing:
+;             - The number of rerolls required
+;             - The dice to reroll, if necessary
+;             - The updated dice configuration
+;             If the 5-straight cannot be completed, the function returns nil.
+; Algorithm:
+;             1) Check each possible configuration for a 5-straight.
+;             2) Determine the number of rerolls needed for each configuration.
+;             3) Compare the reroll counts to find the most efficient configuration.
+;             4) Return the configuration with the least rerolls; otherwise, return nil.
+; Reference: Received help from ChatGPT for getting test cases & header documentation
+; ********************************************************************* */
+(defun check-five-straight-configs (dice)
+    (let*
+        ((config1 (check-straight-config dice 5 40 '(1 1 1 1 1 0)))
+         (config2 (check-straight-config dice 5 40 '(0 1 1 1 1 1)))
+         (config1-rerolls (first config1))
+         (config2-rerolls (first config2)))
 
-; to do next:
-; check-five-straight and check-four-straight functions (for each config, then choose the best)
-; now have them return the best one (lowest num rerolls)
-; strategize function will take this info, distribute it to proper vars, then calculate max-score from this
-; finally, have it return a strategy or NIL
+        (cond ((null config1) config2)
+              ((null config2) config1)
+              ((< config1-rerolls config2-rerolls) config1)
+              (t config2))))
+
+; /* *********************************************************************
+; Function Name: check-four-straight-configs
+; Purpose: To evaluate the current dice configuration for completing 
+;          a 4-straight
+; Parameters:
+;             dice, a list of dice. Each die is represented as a pair 
+;               of values (face value, lock status).
+; Return Value: A list containing:
+;             - The number of rerolls required
+;             - The dice to reroll, if necessary
+;             - The updated dice configuration
+;             If the 4-straight cannot be completed, the function returns nil.
+; Algorithm:
+;             1) Check each possible configuration for a 4-straight.
+;             2) Determine the number of rerolls needed for each configuration.
+;             3) Compare the reroll counts to find the most efficient configuration.
+;             4) Return the configuration with the least rerolls; otherwise, return nil.
+; Reference: Received help from ChatGPT for getting test cases & header documentation
+; ********************************************************************* */
+(defun check-four-straight-configs (dice)
+    (let*
+        ; Check each possible configuration for a 4-straight.
+        ((config1 (check-straight-config dice 4 30 '(1 1 1 1 0 0)))
+         (config2 (check-straight-config dice 4 30 '(0 1 1 1 1 0)))
+         (config3 (check-straight-config dice 4 30 '(0 0 1 1 1 1)))
+         
+         ; Extract the reroll counts for comparison.
+         (config1-rerolls (first config1))
+         (config2-rerolls (first config2))
+         (config3-rerolls (first config3)))
+
+        ; Conditionally check for which configuration has the least rerolls.
+        (cond 
+            ; If only config1 is null, compare config2 and config3.
+            ((null config1)
+             (cond 
+                ((null config2) config3)
+                ((null config3) config2)
+                ((< config2-rerolls config3-rerolls) config2)
+                (t config3)))
+
+            ; If only config2 is null, compare config1 and config3.
+            ((null config2)
+             (cond 
+                ((null config3) config1)
+                ((< config1-rerolls config3-rerolls) config1)
+                (t config3)))
+
+            ; If only config3 is null, compare config1 and config2.
+            ((null config3)
+             (cond 
+                ((< config1-rerolls config2-rerolls) config1)
+                (t config2)))
+
+            ; If all configurations are valid, compare the reroll counts.
+            (t
+             (cond 
+                ((< config1-rerolls config2-rerolls) 
+                 (cond ((< config1-rerolls config3-rerolls) config1) (t config3)))
+                ((< config2-rerolls config3-rerolls) config2)
+                (t config3))))))
 
 ; /* *********************************************************************
 ; Function Name: strategize-straight
@@ -250,6 +337,14 @@
         ; Get the score given the current dice set.
         ((current-score (score-straight dice straight-num value))
         ; Determine what should be rerolled based on free, unscoring dice and target values.
-        )))
+        (best-config 
+            (cond 
+                ((= 5 straight-num) (check-five-straight-configs dice)) 
+                (t (check-four-straight-configs dice))))
+        ; Extract data from the best config found.
+        (to-reroll (second best-config))
+        (target (third best-config)))
+        
+        (cond ((null target) nil) (t (list current-score value to-reroll target name)))))
 
 ; STRATEGY ROUTING NOTE: USE THIS FUNCTION TO SKIP FULL CATEGORIES, OR IF ALL DICE ARE LOCKED.
