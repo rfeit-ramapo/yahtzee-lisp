@@ -347,4 +347,129 @@
         
         (cond ((null target) nil) (t (list current-score value to-reroll target name)))))
 
+; /* *********************************************************************
+; Function Name: score-full-house
+; Purpose: To score a dice set for the Full House category
+; Parameters:
+;           dice, the dice set to score
+; Return Value: an integer representing the score obtained from this dice set
+; Reference: none
+; ********************************************************************* */
+(defun score-full-house (dice)
+    (let*
+        ((max-face1 (max-dice-face (count-dice-faces dice)))
+        (max-face2 (max-dice-face (count-dice-faces (filter-out-face dice (first max-face1))))))
+        
+        ; If there are 3 of one dice face and 2 of another, this scores.
+        (cond ((and (= 3 (second max-face1)) (= 2 (second max-face2)))
+               25)
+              ; Otherwise, 0 points earned.
+              (t 0))))
+
+; /* *********************************************************************
+; Function Name: get-full-house-target-list
+; Purpose: To generate a list of target dice for achieving 
+;          a full house (three of one face and two of another).
+; Parameters:
+;             dice, a list of dice. Each die is represented as a pair 
+;               of values (face value, lock status).
+; Return Value: A list containing a target set of dice.
+;             If a full house is not feasible with the current configuration, or if
+;             all dice need to be rerolled, the function returns nil.
+; Algorithm:
+;             1) Identify the two most frequent dice faces from the current set.
+;             2) If no dice are locked, use the most frequent faces.
+;             3) If one or two dice faces are locked, prioritize locked faces.
+;             4) Return the appropriate target dice for a full house.
+;             5) Return nil if a full house is not possible with the current dice 
+;                configuration.
+; Reference: Received assistance from ChatGPT in documenting function
+; ********************************************************************* */
+(defun get-full-house-target-list (dice)
+    (let*
+        ; Get the first and second max dice faces (e.g. if 3 threes and 2 aces, '(3 3) '(1 2)).
+        ((max-face1 (max-dice-face (count-dice-faces dice)))
+        (max-face2 (max-dice-face (count-dice-faces (filter-out-face dice (first max-face1)))))
+        ; Get locked dice and face counts for them.
+        (locked-dice (filter-locked-dice dice))
+        (locked-counts (count-dice-faces locked-dice))
+        ; Get the max dice face from locked dice.
+        (locked-max1 (max-dice-face locked-counts))
+        ; Get the locked dice and counts, excluding the maximum face.
+        (locked-no-max (filter-out-face locked-dice (first locked-max1)))
+        (locked-counts-no-max (count-dice-faces locked-no-max))
+        ; Get the second max dice face from locked dice.
+        (locked-max2 (max-dice-face locked-counts-no-max))
+        ; Get the remaining locked dice, without the first or second max.
+        (locked-no-max2 (filter-out-face locked-no-max (first locked-max2))))
+
+        (cond 
+            ; If there are more than 2 locked faces, or more than 3 locked of the same face
+            ; then Full House is impossible. Return nil strategy.
+            ((> (max-list (count-dice-faces locked-no-max2)) 0) nil)
+            ((and locked-max1 (> (second locked-max1) 3)) nil)
+
+            (t (let*
+                ((faces-to-use 
+                    (cond
+                        ; If no dice are locked, use the mode of entire dice set.
+                        ((null locked-max1) (list max-face1 max-face2))
+                        ; If only one dice face was locked
+                        ((null locked-max2) 
+                            (cond 
+                                ; If the locked and overall max are the same, use overall values.
+                                ((= (first max-face1) (first locked-max1)) 
+                                    (list max-face1 max-face2))
+                                ; Use locked-max1 first if counts are the same, but different faces.
+                                ((= (second max-face1) (second locked-max1))
+                                    (list locked-max1 max-face1))
+                                ; Otherwise, use it as the second face.
+                                (t (list max-face1 locked-max1))))
+                        ; If two faces are locked, use those.
+                        (t (list locked-max1 locked-max2))))
+                ; Extract the face to aim for 3 with.
+                (three-face (cond
+                             ; Only fill if there is a locked face, or one with > 1 die.
+                             ((and (null locked-max1) (= (second (first faces-to-use)) 1)) nil)
+                             (t (first (first faces-to-use)))))
+                ; Extract the face to aim for 2 with.
+                (two-face (cond
+                            ; Only fill if this die is locked, or has at least 2 dice.
+                            ((null (second faces-to-use)) nil)
+                            ((and 
+                                (= (count-dice-face locked-dice (first (second faces-to-use))) 0) (< (second (second faces-to-use)) 2)) 
+                             nil)
+                            (t (first (second faces-to-use))))))
+
+                (cond 
+                    ; Edge case where dice are in a five-straight: return nil (nothing to prioritize).
+                    ((null three-face) nil)
+                    ; If only one die has more than one value (or is locked), target 3 of them.
+                    ((null two-face) (add-dice '() (list (list three-face 3))))
+                    ; Otherwise, use these dice as the targets.
+                    (t (add-dice '() (list (list three-face 3) (list two-face 2))))))))))
+
+; /* *********************************************************************
+; Function Name: strategize-full-house
+; Purpose: To create a strategy for the Full House category
+; Parameters:
+;           dice, the dice set to strategize for
+; Return Value: a strategy to score for this category (or nil if impossible)
+; Reference: none
+; ********************************************************************* */
+(defun strategize-full-house (dice)
+    (let* 
+        ; Get the score given the current dice set.
+        ((current-score (score-full-house dice))
+        ; Determine the target list and counts.
+        (target-list (get-full-house-target-list dice))
+        (target (count-dice-faces target-list))
+        ; Extract data from the best config found.
+        (to-reroll (count-free-unscored-dice dice target)))
+        
+        (cond 
+            ((and (null target) (filter-locked-dice dice)) nil)
+            (t (list current-score 25 to-reroll target "Full House")))))
+
 ; STRATEGY ROUTING NOTE: USE THIS FUNCTION TO SKIP FULL CATEGORIES, OR IF ALL DICE ARE LOCKED.
+; make sure to handle when something has nil target !

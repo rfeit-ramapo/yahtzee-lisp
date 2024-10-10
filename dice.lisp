@@ -54,6 +54,27 @@
             (t (filter-locked-dice (rest dice)))))))
 
 ; /* *********************************************************************
+; Function Name: filter-out-face
+; Purpose: Filters out dice of a specified face value
+; Parameters: 
+;           dice, a list of dice
+;           face, the face to filter out
+; Return Value: the list of dice, excluding the given face value
+; Reference: none
+; ********************************************************************* */
+(defun filter-out-face (dice face)
+    (cond
+        ; Base case: initial list of dice
+        ((null (first dice)) '())
+        ; If no face was given, just return the full dice set
+        ((null face) dice)
+        (t (cond
+            ; If the die is of this face, skip it and return rest of the dice
+            ((= (first (first dice)) face) (filter-out-face (rest dice) face))
+            ; If die is not of this face, add it to the list of free dice
+            (t (cons (first dice) (filter-out-face (rest dice) face)))))))
+
+; /* *********************************************************************
 ; Function Name: count-dice-face
 ; Purpose: Count the number of dice of a given face value
 ; Parameters: 
@@ -135,7 +156,10 @@
 ; Reference: none
 ; ********************************************************************* */
 (defun total-unscored-dice (curr-die-count scoring-die-count)
-    (max 0 (- curr-die-count scoring-die-count)))
+    ; If there is no scoring-die-count, assume nothing will score.
+    (cond 
+        ((null scoring-die-count) curr-die-count)
+        (t (max 0 (- curr-die-count scoring-die-count)))))
 
 ; /* *********************************************************************
 ; Function Name: total-scored-dice
@@ -211,7 +235,7 @@
 ; Parameters: 
 ;           dice, a list of dice to add to
 ;           replacements, a list of holding lists that contain a face value and 
-;               number of dice to add. For example, '(5 5) indicates add 5 Fives.
+;               number of dice to add. For example, '(5 4) indicates add 4 Fives.
 ; Return Value: an updated list of dice with added values
 ; Reference: none
 ; ********************************************************************* */
@@ -307,3 +331,30 @@
                  (cond ((> num-rerolls 0) (cons (list curr-face num-rerolls) reroll-list))
                        (t reroll-list)))
             (+ curr-face 1)))))
+
+; /* *********************************************************************
+; Function Name: max-dice-face
+; Purpose: Get the dice face with the maximum count
+; Parameters: 
+;           dice-counts, a list of integers for each die face that represent how many there are
+;           curr-face, an optional parameter indicating what face value to start at
+; Return Value: a list containing the face with the most dice, and its count
+; Reference: none
+; ********************************************************************* */
+(defun max-dice-face (dice-counts &optional (curr-face 1))
+    (cond 
+        ; Base case - no dice left, so return nil.
+        ((null dice-counts) nil)
+        ; Get the max-dice-face from the rest of the list.
+        (t (let ((max-rest (max-dice-face (rest dice-counts) (+ curr-face 1))))
+                (cond 
+                    ; If the rest does not have any dice
+                    ((null max-rest) 
+                        (cond 
+                            ; Set the max to be the current face, if it holds any dice.
+                            ((= (first dice-counts) 0) nil) 
+                            (t (list curr-face (first dice-counts)))))
+                    ; If this face has more dice than max of rest, return this face and count.
+                    ((> (first dice-counts) (second max-rest)) (list curr-face (first dice-counts)))
+                    ; Otherwise, use the max of the rest of the list.
+                    (t max-rest))))))
