@@ -15,6 +15,19 @@
 )
 
 ; /* *********************************************************************
+; Function Name: get-scorecard
+; Purpose:  To return the scorecard from a list of game data
+;           The scorecard is represented by a list of categories.
+;           Each category contains either 0 (if unfilled), or 
+;           the points earned, name symbol of the winner, and round filled.
+; Parameters: game-data, a list containing all saved data for the game
+; Return Value: The scorecard extracted from the game-data
+; Reference: none
+; ********************************************************************* */
+(defun get-scorecard (game-data)
+    (second game-data))
+
+; /* *********************************************************************
 ; Function Name: initialize-game-data
 ; Purpose: To add game state information onto serialized information, or create it from scratch
 ; Parameters:
@@ -35,7 +48,7 @@
             ; dice
             ( (1 nil) (1 nil) (1 nil) (1 nil) (1 nil) )
             ; strategy info
-            ( 0 0 (0 0 0 0 0 0) (0 0 0 0 0 0) "None")
+            nil
         )
     )
 )

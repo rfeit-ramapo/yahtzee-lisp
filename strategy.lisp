@@ -3,9 +3,8 @@
 ;   -> Relies on:
 ;       dice.lisp
 ;       utility.lisp
+;       game-data.lisp
 ; ********************************************* */
-(load "utility.lisp")
-(load "dice.lisp")
 
 ; /* *********************************************************************
 ; Function Name: score-multiples
@@ -549,5 +548,89 @@
             ((and (null target-list) (filter-locked-dice dice)) nil)
             (t (list current-score 50 to-reroll target "Yahtzee")))))
 
-; STRATEGY ROUTING NOTE: USE THIS FUNCTION TO SKIP FULL CATEGORIES, OR IF ALL DICE ARE LOCKED.
-; make sure to handle when something has nil target !
+; /* *********************************************************************
+; Function Name: check-category-strategy
+; Purpose: To get a strategy for a particular dice set and category
+; Parameters:
+;           score-data, the scorecard data for this category
+;           dice, the dice set to strategize for
+;           category-num, the index of the category to check [1-12]
+; Return Value: a strategy to score for this category (or nil if impossible)
+; Reference: none
+; ********************************************************************* */
+(defun check-category-strategy (score-data dice category-num)
+    (cond 
+        ; Return nil if this category is already full.
+        ((> (length score-data) 1) nil)
+        ; Otherwise, get the strategy from relevant function.
+        (t (cond
+                ((= category-num 1) (strategize-multiples dice 1 "Aces"))
+                ((= category-num 2) (strategize-multiples dice 2 "Twos"))
+                ((= category-num 3) (strategize-multiples dice 3 "Threes"))
+                ((= category-num 4) (strategize-multiples dice 4 "Fours"))
+                ((= category-num 5) (strategize-multiples dice 5 "Fives"))
+                ((= category-num 6) (strategize-multiples dice 6 "Sixes"))
+                ((= category-num 7) (strategize-kind dice 3 "Three of a Kind"))
+                ((= category-num 8) (strategize-kind dice 4 "Four of a Kind"))
+                ((= category-num 9) (strategize-full-house dice))
+                ((= category-num 10) (strategize-straight dice 4 30 "Four Straight"))
+                ((= category-num 11) (strategize-straight dice 5 40 "Five Straight"))
+                ((= category-num 12) (strategize-yahtzee dice))))))
+
+; /* *********************************************************************
+; Function Name: check-category-strategies
+; Purpose: To get a list of strategies based on input scorecard data
+; Parameters:
+;           score-data, a list of scorecard data for every remaining category
+;           dice, the dice set to strategize for
+;           category-num, optional parameter indicating the index of the first category [1-12]
+; Return Value: a strategy to score for all categories
+; Reference: none
+; ********************************************************************* */
+(defun check-category-strategies (scorecard dice &optional (category-num 1))
+    (cond 
+        ; Base case: no more scorecard categories, so empty list.
+        ((null scorecard) '())
+        ; Add first category strategy onto the rest of them.
+        (t (cons 
+            (check-category-strategy (first scorecard) dice category-num) (check-category-strategies (rest scorecard) dice (+ category-num 1))))))
+
+; /* *********************************************************************
+; Function Name: find-best-strategy
+; Purpose: To find the best strategy from a list of strategies
+; Parameters:
+;           strategies, the list of strategies to pick from
+; Return Value: the best strategy from the list
+; Reference: none
+; ********************************************************************* */
+(defun find-best-strategy (strategies)
+    (cond 
+        ; If no strategies passed in, there is no best strategy.
+        ((null strategies) nil)
+        (t (let* 
+            ; Get the first strategy in the list, and the best from the rest.
+            ((curr-strat (first strategies))
+            (best-remaining (find-best-strategy (rest strategies)))
+            ; Extract max score from each (second value in strategy).
+            (curr-strat-score (second curr-strat))
+            (best-remaining-score (second best-remaining)))
+            
+            (cond
+                ; If there is no strategy for one, use the other.
+                ((null best-remaining) curr-strat)
+                ((null curr-strat) best-remaining)
+                ; If both strategies exist, use the one with higher max score.
+                ; If there is a tie, go for the higher index strategy.
+                ((> curr-strat-score best-remaining-score) curr-strat)
+                (t best-remaining))))))
+
+; /* *********************************************************************
+; Function Name: pick-strategy
+; Purpose: To find the best strategy based on current game state
+; Parameters:
+;           game-data, a list representing the current state of the game
+; Return Value: the best strategy determined from the scorecard and dice
+; Reference: none
+; ********************************************************************* */
+(defun pick-strategy (game-data) 
+    (find-best-strategy (check-category-strategies (get-scorecard game-data) (get-dice game-data))))

@@ -152,14 +152,13 @@
 ; Parameters: 
 ;           curr-die-count, an integer [0-5] representing how many dice of this face there are
 ;           scoring-die-count, an integer [0-5] representing how many dice of this face score
+;           locked-die-count, an optional parameter representing how many dice of this face are 
+;               locked [0-5]. If supplied, only returns free unscored dice.
 ; Return Value: an integer representing how many dice of this face are unscored
 ; Reference: none
 ; ********************************************************************* */
-(defun total-unscored-dice (curr-die-count scoring-die-count)
-    ; If there is no scoring-die-count, assume nothing will score.
-    (cond 
-        ((null scoring-die-count) curr-die-count)
-        (t (max 0 (- curr-die-count scoring-die-count)))))
+(defun total-unscored-dice (curr-die-count scoring-die-count &optional (locked-die-count 0))
+    (max (- curr-die-count (max scoring-die-count locked-die-count)) 0))
 
 ; /* *********************************************************************
 ; Function Name: total-scored-dice
@@ -179,10 +178,12 @@
 ; Parameters: 
 ;           dice-counts, a list of integers for each die face that represent how many there are
 ;           scoring-counts, a list of integers for each die face that represent what would score
+;           locked-dice, an optional parameter listing how many dice of each face are 
+;               locked. If supplied, only returns free unscored dice.
 ; Return Value: a list of dice counts for each face that do not contribute to a score
 ; Reference: none
 ; ********************************************************************* */
-(defun count-unscored-dice (dice-counts scoring-counts)
+(defun count-unscored-dice (dice-counts scoring-counts &optional locked-counts)
     (cond
         ; Base case: last dice count in lists
         ((null (rest dice-counts)) 
@@ -191,8 +192,8 @@
 
         ; Recursive case: add to the list of unscored dice
         (t (cons 
-            (total-unscored-dice (first dice-counts) (first scoring-counts))
-            (count-unscored-dice (rest dice-counts) (rest scoring-counts))))))
+            (total-unscored-dice (first dice-counts) (first scoring-counts) (first locked-counts))
+            (count-unscored-dice (rest dice-counts) (rest scoring-counts) (rest locked-counts))))))
 
 ; /* *********************************************************************
 ; Function Name: count-scored-dice
@@ -226,7 +227,10 @@
 ; ********************************************************************* */
 (defun count-free-unscored-dice (curr-dice scoring-counts)
     ; Get the counts of free dice and use that to compare against scoring dice
-    (count-unscored-dice (count-dice-faces (filter-free-dice curr-dice)) scoring-counts))
+    (count-unscored-dice 
+        (count-dice-faces curr-dice) 
+        scoring-counts 
+        (count-dice-faces (filter-locked-dice curr-dice))))
 
 
 ; /* *********************************************************************
