@@ -468,8 +468,86 @@
         (to-reroll (count-free-unscored-dice dice target)))
         
         (cond 
-            ((and (null target) (filter-locked-dice dice)) nil)
+            ((and (null target-list) (filter-locked-dice dice)) nil)
             (t (list current-score 25 to-reroll target "Full House")))))
+
+; /* *********************************************************************
+; Function Name: score-yahtzee
+; Purpose: To score a dice set for the Yahtzee category
+; Parameters:
+;           dice, the dice set to score
+; Return Value: an integer representing the score obtained from this dice set
+; Reference: none
+; ********************************************************************* */
+(defun score-yahtzee (dice)
+    (cond 
+        ; If there is a face with 5 values, this scores 50 points.
+        ((>= (max-list (count-dice-faces dice)) 5) 50)
+        ; Otherwise, this does not score.
+        (t 0)))
+
+; /* *********************************************************************
+; Function Name: get-yahtzee-target-list
+; Purpose: To generate a target list of dice faces for achieving a Yahtzee
+;          (five of the same dice face).
+; Parameters:
+;             dice, a list of dice. Each die is represented as a pair 
+;               of values (face value, lock status).
+; Return Value: A list containing:
+;             - The dice face to aim for five of a kind (or nil if unachievable).
+;             If a Yahtzee is not possible, the function returns nil.
+; Algorithm:
+;             1) Identify the most frequent dice face from the current set.
+;             2) Check for locked dice faces and prioritize them for the target.
+;             3) If there are multiple locked faces or no suitable target, return nil.
+;             4) Return the appropriate target list for achieving a Yahtzee (five of the same face).
+;             5) Return nil if a Yahtzee is not feasible with the current configuration.
+; Reference: Received assistance from ChatGPT in documenting function
+; ********************************************************************* */
+(defun get-yahtzee-target-list (dice)
+    (let*
+        ; Get the max dice face, and its count.
+        ((max-face (max-dice-face (count-dice-faces dice)))
+        ; Get locked dice and face counts for them.
+        (locked-dice (filter-locked-dice dice))
+        (locked-counts (count-dice-faces locked-dice))
+        ; Get the max dice face from locked dice, and locked dice after its removal.
+        (locked-max (first (max-dice-face locked-counts)))
+        (locked-no-max (filter-out-face locked-dice locked-max))
+        ; Use the locked face to score, if it exists. Otherwise, use the overall mode.
+        (face-to-use 
+            (cond
+                (locked-max locked-max)
+                ((= (second max-face) 1) nil)
+                (t (first max-face)))))
+        (cond 
+            ; If there is more than 1 locked face, Yahtzee is impossible. Return nil strategy.
+            ((> (max-list (count-dice-faces locked-no-max)) 0) nil)
+            ; If face-to-use is null (only if all counts are 1), return nil strategy.
+            ((null face-to-use) nil)
+            (t (add-dice '() (list (list face-to-use 5)))))))
+
+; /* *********************************************************************
+; Function Name: strategize-yahtzee
+; Purpose: To create a strategy for the Yahtzee category
+; Parameters:
+;           dice, the dice set to strategize for
+; Return Value: a strategy to score for this category (or nil if impossible)
+; Reference: none
+; ********************************************************************* */
+(defun strategize-yahtzee (dice)
+    (let* 
+        ; Get the score given the current dice set.
+        ((current-score (score-yahtzee dice))
+        ; Determine the target list and counts.
+        (target-list (get-yahtzee-target-list dice))
+        (target (count-dice-faces target-list))
+        ; Extract data from the best config found.
+        (to-reroll (count-free-unscored-dice dice target)))
+        
+        (cond 
+            ((and (null target-list) (filter-locked-dice dice)) nil)
+            (t (list current-score 50 to-reroll target "Yahtzee")))))
 
 ; STRATEGY ROUTING NOTE: USE THIS FUNCTION TO SKIP FULL CATEGORIES, OR IF ALL DICE ARE LOCKED.
 ; make sure to handle when something has nil target !
