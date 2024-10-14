@@ -17,6 +17,34 @@
     (third game-data))
 
 ; /* *********************************************************************
+; Function Name: print-dice
+; Purpose: Prints the dice set that is passed in
+; Parameters: 
+;           dice, a set of dice
+; Return Value: nil
+; Reference: none
+; ********************************************************************* */
+(defun print-dice (dice)
+    (cond
+        ; Base case - no more dice, so print a newline.
+        ((null dice) (terpri) nil)
+        (t
+            (let 
+                ; Save the face value and whether the die is locked.
+                ((value (first (first dice)))
+                (locked (second (first dice))))
+
+                ; Print locked dice in red.
+                (cond (locked 
+                    (format t "~c[31m" #\ESC)
+                    (princ value)
+                    (format t "~c[0m " #\ESC))
+                ; Print all other dice normally.
+                (t (princ value) (princ " ")))
+            ; Print the rest of the diceset.
+            (print-dice (rest dice))))))
+
+; /* *********************************************************************
 ; Function Name: filter-free-dice
 ; Purpose: Filters out dice that are locked from a list of dice
 ; Parameters: 
@@ -382,3 +410,60 @@
             (validate-die-face))
         ; Otherwise, generate a random value [1-6].
         (t (+ (random 6) 1))))
+
+; /* *********************************************************************
+; Function Name: auto-roll
+; Purpose: Rolls a specified number of dice automatically (no player input)
+; Parameters:
+;           num-to-roll, the number of dice to roll
+; Return Value: a list containing dice faces of specified length
+; Reference: none
+; ********************************************************************* */
+(defun auto-roll (num-to-roll)
+    (cond 
+        ; Base case - start with an empty list if none left to roll.
+        ((= 0 num-to-roll) '())
+        ; Recursive case - add a randomly generated die onto the list.
+        (t (cons (+ (random 6) 1) (auto-roll (- num-to-roll 1))))))
+
+; /* *********************************************************************
+; Function Name: combine-dice
+; Purpose: Adds a list of dice faces onto an existing list of dice
+; Parameters:
+;           to-add, the list of dice faces to add
+;           base-dice, the list of dice to add on to
+; Return Value: a dice set combining both sets of values
+; Reference: none
+; ********************************************************************* */
+(defun combine-dice (to-add base-dice)
+    (cond 
+        ; If there is nothing left to add, return base-dice.
+        ((null to-add) base-dice)
+        ; Recursively add the first dice value onto the diceset.
+        (t (combine-dice
+            (rest to-add)
+            (append base-dice (list (list (first to-add) nil)))))))
+
+; /* *********************************************************************
+; Function Name: roll-all
+; Purpose: Rolls all free dice
+; Parameters:
+;           dice, the dice set to roll
+; Return Value: a list containing values of the resulting dice [1-6]
+; Reference: none
+; ********************************************************************* */
+(defun roll-all (dice)
+    (princ "Would you like to manually input this dice roll? (y/n)")
+    (terpri)
+    (let*
+        ((num-to-roll (length (filter-free-dice dice)))
+        (new-rolls
+            (cond
+                ((validate-yes-no)
+                    (princ "Input the result of your roll.")
+                    (terpri)
+                    (validate-dice-faces num-to-roll))
+                (t (auto-roll num-to-roll)))))
+        
+        ; Combine locked dice with newly rolled dice
+        (combine-dice new-rolls (filter-locked-dice dice))))

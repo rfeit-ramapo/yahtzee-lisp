@@ -72,7 +72,11 @@
     nil)
 
 (defun run-round (game-data)
-    (print-round-header (get-round-num game-data)))
+    (print-round-header (get-round-num game-data))
+    
+    (let 
+        ((player-order (get-player-order game-data)))
+        ))
 
 ; /* *********************************************************************
 ; Function Name: run-rounds

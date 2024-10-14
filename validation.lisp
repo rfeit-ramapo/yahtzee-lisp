@@ -190,3 +190,46 @@
                 (princ "Error: Input must be a valid die face [1-6]. Please try again.")
                 (terpri)
                 (validate-die-face)))))
+
+; /* *********************************************************************
+; Function Name: validate-dice-list
+; Purpose: Validates a list of dice
+; Parameters:
+;           dice-list, a list of dice faces to validate
+;           num-to-roll, the number of dice required
+; Return Value: t if the list is valid, or nil if not
+; Reference: none
+; ********************************************************************* */
+(defun validate-dice-list (dice-list num-to-roll)
+    (cond
+        ; If reached end of dice list, validate if input was correct length.
+        ((null dice-list) (cond ((= num-to-roll 0) t) (t nil)))
+        ; Invalid if the dice list has non-integer values, or values outside range [1,6].
+        ((not (integerp (first dice-list))) nil)
+        ((or (< (first dice-list) 1) (> (first dice-list) 6)) nil)
+        ; Recursively check the rest of the dice list.
+        (t (validate-dice-list (rest dice-list) (- num-to-roll 1)))))
+
+; /* *********************************************************************
+; Function Name: validate-dice-faces
+; Purpose: Validates input of multiple dice faces [1-6]
+; Parameters:
+;           num-to-roll, a number representing how many dice should be rolled
+; Return Value: a list of validated dice faces
+; Reference: none
+; ********************************************************************* */
+(defun validate-dice-faces (num-to-roll)
+    (let 
+        ; Get user input.
+        ((input (read)))
+        (cond 
+            ; Retry if invalid dice list was input.
+            ((not (and (listp input) (validate-dice-list input num-to-roll)))
+                (princ "Error: Input must be a list of ")
+                (princ num-to-roll)
+                (cond 
+                    ((= num-to-roll 1) (princ " dice face (e.g. (3)). Please try again."))
+                    (t (princ " dice faces (e.g. (1 2 3)). Please try again.")))
+                (terpri)
+                (validate-dice-faces num-to-roll))
+            (t input))))
