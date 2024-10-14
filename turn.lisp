@@ -1,8 +1,60 @@
 ; /* *********************************************
 ; Source Code to handle rounds of the game
 ;   -> Relies on:
+;       validation.lisp
 ;       dice.lisp
+;       strategy.lisp
 ; ********************************************* */
+
+; /* *********************************************************************
+; Function Name: list-available-categories
+; Purpose: To list or validate player-input list of available categories
+; Parameters:
+;           game-data, an object holding info on the game state
+;           player-name, the name of the player whose turn it is
+; Return Value: the list of available categories obtained
+; Reference: none
+; ********************************************************************* */
+(defun list-available-categories (game-data player-name)
+    (let
+        ((available-categories (get-available-categories game-data)))
+        
+        (cond
+            ; List available categories for the Computer player.
+            ((equal player-name 'Computer)
+                (terpri)
+                (princ "Listing all available categories, given the dice set so far...")
+                (terpri)
+                (print available-categories)
+            )
+            ; For the Human player, validate their input.
+            (t (validate-available-categories available-categories))) 
+        available-categories))
+
+; /* *********************************************************************
+; Function Name: pursue-categories
+; Purpose: To list or validate player-input list of available categories
+; Parameters:
+;           game-data, an object holding info on the game state
+;           player-name, the name of the player whose turn it is
+; Return Value: nil
+; Reference: none
+; ********************************************************************* */
+(defun list-available-categories (game-data player-name)
+    (let
+        ((available-categories (get-available-categories game-data)))
+        
+        (cond
+            ; List available categories for the Computer player.
+            ((equal player-name 'Computer)
+                (terpri)
+                (princ "Listing all available categories, given the dice set so far...")
+                (terpri)
+                (print available-categories)
+            )
+            ; For the Human player, validate their input.
+            (t (validate-available-categories available-categories))) 
+        nil))
 
 ; /* *********************************************************************
 ; Function Name: print-roll-header
@@ -19,16 +71,21 @@
     (print roll-num)
     nil)
 
-(defun handle-rolls (game-data &optional (roll-num 1) stand)
+(defun handle-rolls (game-data player-name &optional (roll-num 1) stand)
     (cond
         ; Return updated game-data once player stood or finished third roll.
         ((or stand (> roll-num 3)) game-data)
         (t
             (let
-                ((roll-result (roll-all (get-dice game-data))))
+                ((updated-game-data (let
+                    ((roll-result (roll-all (get-dice game-data))))
 
-                (princ "Roll Result: ")
-                (print-dice roll-result))
+                    (princ "Roll Result: ")
+                    (print-dice roll-result)
+                    (update-dice game-data roll-result))))
+                
+                (list-available-categories updated-game-data player-name)
+            
                 
                 )))
 ; /* *********************************************************************
@@ -52,7 +109,10 @@
 (defun begin-turn (player-name game-data)
     (print-turn-header player-name)
     (let
-        ((rolled-dice (roll-all (get-dice game-data))))
-        
-        
-    ))
+        ((final-dice (handle-rolls game-data player-name)))
+        ; ask to list available categories
+        ; choose category
+        ; no need to unlock dice! just use original values
+        ; return updated game-data
+            ; update-scorecard function for this
+        ))

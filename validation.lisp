@@ -233,3 +233,29 @@
                 (terpri)
                 (validate-dice-faces num-to-roll))
             (t input))))
+
+; /* *********************************************************************
+; Function Name: validate-available-categories
+; Purpose: Validates that the user input all available categories correctly
+; Parameters:
+;           available-categories, a list of available categories for current diceset
+; Return Value: nil
+; Reference: none
+; ********************************************************************* */
+(defun validate-available-categories (available-categories)
+    (let
+        ((input (read)))
+        (cond
+            ; Help functionality
+            ((equalp input 'h)
+                (princ "The available categories are: ")
+                (princ available-categories)
+                (terpri)
+                (validate-available-categories available-categories))
+            ; If the user input a non-list or the wrong values
+            ((not (and (listp input) (equalp input available-categories)))
+                (princ "Error: Input must be a list of available categories that have at least one contributing die (e.g. (1 3 8)). Please try again.")
+                (terpri)
+                (validate-available-categories available-categories))
+            ; Validated
+            (t nil))))

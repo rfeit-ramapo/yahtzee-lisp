@@ -7,6 +7,61 @@
 ; ********************************************* */
 
 ; /* *********************************************************************
+; Function Name: get-strat-curr-score
+; Purpose: Extract the current score from the strategy object
+; Parameters: 
+;           strategy, an object holding information about the strategy
+; Return Value: the current score associated with the strategy's category
+; Reference: none
+; ********************************************************************* */
+(defun get-strat-curr-score (strategy)
+    (first strategy))
+
+; /* *********************************************************************
+; Function Name: get-strat-max-score
+; Purpose: Extract the maximum score from the strategy object
+; Parameters: 
+;           strategy, an object holding information about the strategy
+; Return Value: the maximum score possible using this strategy
+; Reference: none
+; ********************************************************************* */
+(defun get-strat-max-score (strategy)
+    (second strategy))
+
+; /* *********************************************************************
+; Function Name: get-strat-to-reroll
+; Purpose: Extract the dice to reroll from the strategy object
+; Parameters: 
+;           strategy, an object holding information about the strategy
+; Return Value: a list of dice counts to reroll
+; Reference: none
+; ********************************************************************* */
+(defun get-strat-to-reroll (strategy)
+    (third strategy))
+
+; /* *********************************************************************
+; Function Name: get-strat-target
+; Purpose: Extract the target value from the strategy object
+; Parameters: 
+;           strategy, an object holding information about the strategy
+; Return Value: a list of dice counts to target with this strategy
+; Reference: none
+; ********************************************************************* */
+(defun get-strat-target (strategy)
+    (fourth strategy))
+
+; /* *********************************************************************
+; Function Name: get-strat-category-name
+; Purpose: Extract the category name from the strategy object
+; Parameters: 
+;           strategy, an object holding information about the strategy
+; Return Value: the name of the category this strategy pursues
+; Reference: none
+; ********************************************************************* */
+(defun get-strat-category-name (strategy)
+    (fifth strategy))
+
+; /* *********************************************************************
 ; Function Name: score-multiples
 ; Purpose: To score a dice set for a Multiples category (aces, twos, etc.)
 ; Parameters:
@@ -634,3 +689,45 @@
 ; ********************************************************************* */
 (defun pick-strategy (game-data) 
     (find-best-strategy (check-category-strategies (get-scorecard game-data) (get-dice game-data))))
+
+; /* *********************************************************************
+; Function Name: filter-available-strategies
+; Purpose: To filter out strategies that are unavailable or have 0 contributing dice.
+;          Creates a list of category indices based on the list.
+; Parameters:
+;           strategies, the list of strategies to filter
+; Return Value: a filtered list of available categories
+; Reference: none
+; ********************************************************************* */
+(defun filter-available-strategies (strategies)
+    (cond  
+        ; Start with an empty list of strategies.
+        ((null strategies) '())
+        ; If this strategy is null, skip it and filter the rest.
+        ((null (first strategies)) (filter-available-strategies (rest strategies)))
+        (t (let* 
+            ((curr-strat (first strategies))
+            (curr-score (get-strat-curr-score curr-strat))
+            (category-name (get-strat-category-name curr-strat))))
+            (category-index (get-category-index category-name))
+            ; Only count the first 6 categories if they have at least one contributing die.
+            (cond ((and 
+                    (<= category-index 6)
+                    (= curr-score 0))
+                (filter-available-strategies (rest strategies)))
+
+                (t (cons category-index (filter-available-strategies (rest strategies))))))))
+
+; /* *********************************************************************
+; Function Name: get-available-categories
+; Purpose: To get a list of available categories given the game data
+; Parameters:
+;           game-data, a list containing all saved data for the game
+; Return Value: a list of available categories
+; Reference: none
+; ********************************************************************* */
+(defun get-available-categories (game-data)
+    (filter-available-strategies 
+        (check-category-strategies 
+            (get-scorecard game-data)
+            (get-dice game-data))))

@@ -3,6 +3,17 @@
 ; ********************************************* */
 
 ; /* *********************************************************************
+; Function Name: get-dice
+; Purpose: Extract the dice set from game-data
+; Parameters: 
+;           game-data, an object holding info on the game state
+; Return Value: the dice set (list of dice)
+; Reference: none
+; ********************************************************************* */
+(defun get-dice (game-data)
+    (third game-data))
+
+; /* *********************************************************************
 ; Function Name: get-default-scorecard
 ; Purpose: To return a list containing a blank scorecard to use to start games
 ; Parameters: None
@@ -36,6 +47,16 @@
 ; ********************************************************************* */
 (defun get-round-num (game-data)
     (first game-data))
+
+; /* *********************************************************************
+; Function Name: get-strategy
+; Purpose:  To return the currently saved strategy from a list of game data
+; Parameters: game-data, a list containing all saved data for the game
+; Return Value: The currently saved strategy
+; Reference: none
+; ********************************************************************* */
+(defun get-strategy (game-data)
+    (fourth game-data))
 
 ; /* *********************************************************************
 ; Function Name: initialize-game-data
@@ -255,3 +276,58 @@
     (list 
         (list 'Human (score-player 'Human (get-scorecard game-data)))
         (list 'Computer (score-player 'Computer (get-scorecard game-data)))))
+
+; /* *********************************************************************
+; Function Name: get-category-index
+; Purpose: To get the index of a category from its name
+; Parameters:
+;           category-name, the name of the category to get the index of
+; Return Value: the index value of the category [1-12]
+; Reference: none
+; ********************************************************************* */
+(defun get-category-index (category-name)
+    (cond 
+        ((= category-name "Aces") 1)
+        ((= category-name "Twos") 2)
+        ((= category-name "Threes") 3)
+        ((= category-name "Fours") 4)
+        ((= category-name "Fives") 5)
+        ((= category-name "Sixes") 6)
+        ((= category-name "Three of a Kind") 7)
+        ((= category-name "Four of a Kind") 8)
+        ((= category-name "Full House") 9)
+        ((= category-name "Four Straight") 10)
+        ((= category-name "Five Straight") 11)
+        ((= category-name "Yahtzee") 12)))
+
+; /* *********************************************************************
+; Function Name: update-dice
+; Purpose: To update the diceset for a list of game data
+; Parameters:
+;           game-data, a list containing all saved data for the game
+;           dice, the new dice set to update the game data with
+; Return Value: the updated game data
+; Reference: none
+; ********************************************************************* */
+(defun update-dice (game-data dice)
+    (list
+        (get-round-num game-data)
+        (get-scorecard game-data)
+        dice
+        (get-strategy game-data)))
+
+; /* *********************************************************************
+; Function Name: update-strategy
+; Purpose: To update the strategy for a list of game data
+; Parameters:
+;           game-data, a list containing all saved data for the game
+;           strategy, the new strategy to update the game data with
+; Return Value: the updated game data
+; Reference: none
+; ********************************************************************* */
+(defun update-strategy (game-data strategy)
+    (list
+        (get-round-num game-data)
+        (get-scorecard game-data)
+        (get-dice game-data)
+        strategy))

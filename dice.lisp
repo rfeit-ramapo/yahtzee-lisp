@@ -3,18 +3,8 @@
 ;   -> Relies on:
 ;       utility.lisp
 ;       validation.lisp
+;       game-data.lisp
 ; ********************************************* */
-
-; /* *********************************************************************
-; Function Name: get-dice
-; Purpose: Extract the dice set from game-data
-; Parameters: 
-;           game-data, an object holding info on the game state
-; Return Value: the dice set (list of dice)
-; Reference: none
-; ********************************************************************* */
-(defun get-dice (game-data)
-    (third game-data))
 
 ; /* *********************************************************************
 ; Function Name: print-dice
