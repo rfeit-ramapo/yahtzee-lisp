@@ -167,3 +167,26 @@
         )
     )
 )
+
+; /* *********************************************************************
+; Function Name: validate-die-face
+; Purpose: Validates input of a die face [1-6]
+; Parameters: None
+; Return Value: the die face that was input
+; Reference: none
+; ********************************************************************* */
+(defun validate-die-face ()
+    (let 
+        ; Get user input.
+        ((input (read)))
+        (cond 
+            ; Valid input: must be an integer
+            ((not (integerp input))
+                (princ "Error: Input must be an integer. Please try again.")
+                (terpri)
+                (validate-die-face))
+            ((and (>= input 1) (<= input 6)) input)
+            (t
+                (princ "Error: Input must be a valid die face [1-6]. Please try again.")
+                (terpri)
+                (validate-die-face)))))

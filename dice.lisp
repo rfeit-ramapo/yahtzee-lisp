@@ -2,6 +2,7 @@
 ; Source Code to manipulate dice into different formats
 ;   -> Relies on:
 ;       utility.lisp
+;       validation.lisp
 ; ********************************************* */
 
 ; /* *********************************************************************
@@ -362,3 +363,22 @@
                     ((> (first dice-counts) (second max-rest)) (list curr-face (first dice-counts)))
                     ; Otherwise, use the max of the rest of the list.
                     (t max-rest))))))
+
+; /* *********************************************************************
+; Function Name: roll-one
+; Purpose: Rolls a single die
+; Parameters: none
+; Return Value: the value of the resulting die face [1-6]
+; Reference: none
+; ********************************************************************* */
+(defun roll-one ()
+    (princ "Would you like to manually input this dice roll? (y/n)")
+    (terpri)
+    (cond 
+        ; If the player wants to manually input die, validate it.
+        ((validate-yes-no) 
+            (princ "Input the result of your roll.")
+            (terpri)
+            (validate-die-face))
+        ; Otherwise, generate a random value [1-6].
+        (t (+ (random 6) 1))))

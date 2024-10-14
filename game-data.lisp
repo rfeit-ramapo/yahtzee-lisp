@@ -28,6 +28,16 @@
     (second game-data))
 
 ; /* *********************************************************************
+; Function Name: get-round-num
+; Purpose:  To return the current round number from a list of game data
+; Parameters: game-data, a list containing all saved data for the game
+; Return Value: The round number extracted from the game-data
+; Reference: none
+; ********************************************************************* */
+(defun get-round-num (game-data)
+    (first game-data))
+
+; /* *********************************************************************
 ; Function Name: initialize-game-data
 ; Purpose: To add game state information onto serialized information, or create it from scratch
 ; Parameters:
@@ -157,3 +167,91 @@
         game-data
     )
 )
+
+; /* *********************************************************************
+; Function Name: check-category-full
+; Purpose: To check if a category has been filled
+; Parameters:
+;           category, a list representing score data for a category
+;               Will only have 0 if unfilled, or will have the following:
+;               - points scored
+;               - winner
+;               - the round the category was filled in
+; Return Value: t if filled, or nil if unfilled
+; Reference: none
+; ********************************************************************* */
+(defun check-category-full (category)
+    (cond
+        ; The category is full if there is more than one value in score data
+        ((= (length category) 1) nil)
+        (t t)))
+
+; /* *********************************************************************
+; Function Name: count-full-categories
+; Purpose: Counts the number of categories that have been filled
+; Parameters:
+;           scorecard, a list containing score data for each category
+; Return Value: the number of filled categories
+; Reference: none
+; ********************************************************************* */
+(defun count-full-categories (scorecard)
+    (cond 
+        ; Base case - start at 0 filled for an empty scorecard
+        ((null scorecard) 0)
+        ; Add one if this category is full
+        ((check-category-full (first scorecard)) (+ 1 (count-full-categories (rest scorecard))))
+        ; Otherwise, check the rest of the categories
+        (t (count-full-categories (rest scorecard)))))
+
+; /* *********************************************************************
+; Function Name: check-scorecard-full
+; Purpose: Checks if the scorecard is completely full
+; Parameters:
+;           game-data, a list containing all saved data for the game
+; Return Value: t if the scorecard is full, or nil if there are unfilled categories
+; Reference: none
+; ********************************************************************* */
+(defun check-scorecard-full (game-data)
+    (cond 
+        ; If 12 categories are filled, the scorecard is full.
+        ((= (count-full-categories (get-scorecard game-data)) 12) t)
+        (t nil)))
+
+; /* *********************************************************************
+; Function Name: score-player
+; Purpose: Adds points scored to a particular player's info
+; Parameters:
+;           player-name, a symbol of the player's name
+;           scorecard, a list of categories to add points from
+;           player-points, an optional number representing the total points this player has scored
+; Return Value: the total score of the player based on the scorecard and initial points
+; Reference: none
+; ********************************************************************* */
+(defun score-player (player-name scorecard &optional (player-points 0))
+    (cond
+        ; If the scorecard is empty, return current value of player-points
+        ((null scorecard) player-points)
+        ; If the player name matches the first scorecard category
+        ((equal player-name (second (first scorecard)))
+            ; Recursively call function with updated points
+            (score-player 
+                player-name 
+                (rest scorecard)
+                (+ player-points (first (first scorecard)))))
+        ; Recursively call function without altering points
+        (t (score-player player-name (rest scorecard) player-points))))
+
+; /* *********************************************************************
+; Function Name: get-player-scores
+; Purpose: Gets the scores for both players (Human and Computer)
+; Parameters:
+;           game-data, a list containing all saved data for the game
+; Return Value: a list containing two lists; both contain:
+;               - The symbolic name of a player
+;               - A number representing their current score
+; Reference: none
+; ********************************************************************* */
+(defun get-player-scores (game-data)
+    (list 
+        (list 'Human (score-player 'Human (get-scorecard game-data)))
+        (list 'Computer (score-player 'Computer (get-scorecard game-data)))))

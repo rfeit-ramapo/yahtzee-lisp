@@ -5,6 +5,15 @@
 ; * Date:                                                    *
 ; ************************************************************
 
+; Load all files in correct order
+(load "utility.lisp")
+(load "game-data.lisp")
+(load "validation.lisp")
+(load "serialize.lisp")
+(load "dice.lisp")
+(load "strategy.lisp")
+(load "rounds.lisp")
+
 ; /* *********************************************************************
 ; Function Name: SAMPLE-FUNCTION-HEADER
 ; Purpose: To return a list containing a blank scorecard to use to start games
@@ -60,10 +69,5 @@
 ; Function calls
 ; ********************************************* */
 
-; Load all files in correct order
-(load "game-data.lisp")
-(load "validation.lisp")
-(load "serialize.lisp")
-
 ; Run the tournament
-(run-tournament)
+;(run-tournament)
