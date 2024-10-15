@@ -5,6 +5,10 @@
 ;       utility.lisp
 ;       game-data.lisp
 ; ********************************************* */
+(load "utility.lisp")
+(load "validation.lisp")
+(load "game-data.lisp")
+(load "dice.lisp")
 
 ; /* *********************************************************************
 ; Function Name: get-strat-curr-score
@@ -708,15 +712,15 @@
         (t (let* 
             ((curr-strat (first strategies))
             (curr-score (get-strat-curr-score curr-strat))
-            (category-name (get-strat-category-name curr-strat))))
-            (category-index (get-category-index category-name))
+            (category-name (get-strat-category-name curr-strat))
+            (category-index (get-category-index category-name)))
             ; Only count the first 6 categories if they have at least one contributing die.
             (cond ((and 
                     (<= category-index 6)
                     (= curr-score 0))
                 (filter-available-strategies (rest strategies)))
 
-                (t (cons category-index (filter-available-strategies (rest strategies))))))))
+                (t (cons category-index (filter-available-strategies (rest strategies)))))))))
 
 ; /* *********************************************************************
 ; Function Name: get-available-categories
@@ -731,3 +735,158 @@
         (check-category-strategies 
             (get-scorecard game-data)
             (get-dice game-data))))
+
+; /* *********************************************************************
+; Function Name: print-target-die
+; Purpose: To print a string for a single target face
+; Parameters:
+;           face, the face value of the dice
+;           count, the count of this face value
+;           last-print, an optional value indicating that this is the last die to print
+; Return Value: nil
+; Reference: none
+; ********************************************************************* */
+(defun print-target-die (face count &optional last-print)
+    (cond
+        ; Do not print if there are no dice of this face.
+        ((= count 0) nil)
+
+        (t 
+        ; Print the count and face value (e.g. "3 Two")
+        (princ count) 
+        (princ " ")
+        (princ (cond
+            ((= face 1) "Ace")
+            ((= face 2) "Two")
+            ((= face 3) "Three")
+            ((= face 4) "Four")
+            ((= face 5) "Five")
+            ((= face 6) "Six")))
+        ; If plural, add either "es" for "Six" or "s" for anything else.
+        (cond ((> count 1)
+            (cond 
+                ((= face 6) (princ "es"))
+                (t (princ "s")))))
+        ; If this is not the last value to print, add a comma
+        (cond ((not last-print) (princ ", ") nil) (t (princ " ") nil)))))
+
+; /* *********************************************************************
+; Function Name: print-target-dice
+; Purpose: To print a string for target dice counts
+; Parameters:
+;           dice, the list of target dice face counts
+;           total-dice, the total number of dice to print
+;           curr-face, an optional value indicating the current face to print
+;           curr-printed, an optional value indicating how many faces have been printed
+;           multiple-faces, an optional value indicating if multiple faces have been printed
+; Return Value: nil
+; Reference: none
+; ********************************************************************* */
+(defun print-target-dice (dice total-dice &optional (curr-face 1) (curr-printed 0) multiple-faces)
+    (cond
+        ; If this is the last face to print
+        ((= total-dice (+ (first dice) curr-printed))
+        (cond (multiple-faces (princ "and ")))
+        (print-target-die curr-face (first dice) t))
+
+        ; If there are more faces to print
+        (t
+        (print-target-die curr-face (first dice))
+        (print-target-dice 
+            (rest dice) total-dice (+ curr-face 1) (+ curr-printed (first dice)) t))))
+
+; /* *********************************************************************
+; Function Name: print-strategy
+; Purpose: To print the strategy recommendation for a player or computer 
+;          based on the provided strategy and dice configuration.
+; Parameters:
+;           strategy, a list representing the selected strategy
+;           player-name, a symbol representing the player’s name
+;           selection, an optional parameter representing whether this is for selecting
+;               a category instead of choosing what/whether to reroll
+; Return Value: None
+; Algorithm:
+;           1) Extract the strategy components: current score, max score, 
+;              dice to reroll, target dice, and the category name.
+;           2) If the player is 'Human:
+;              - If the strategy is nil, recommend standing due to no available categories.
+;              - If current score equals max score, suggest standing and pursuing 
+;                the category with the highest score.
+;              - Otherwise, suggest rerolling dice to aim for the target category.
+;           3) If the player is not 'Human (assume 'Computer):
+;              - Apply similar logic as above but use computer-specific messages.
+;           4) Print the appropriate message using `princ` and `terpri` for formatting.
+; Reference: Received help from ChatGPT for header documentation
+; ********************************************************************* */
+(defun print-strategy (strategy player-name &optional selection)
+    (let
+        ((curr-score (get-strat-curr-score strategy))
+        (max-score (get-strat-max-score strategy))
+        (to-reroll (get-strat-to-reroll strategy))
+        (target (get-strat-target strategy))
+        (category-name (get-strat-category-name strategy)))
+        
+        (cond
+            ; Print statements for human recommendations.
+            ((equalp player-name 'Human)
+                (cond 
+                    ; No good strategy was found.
+                    ((null strategy)
+                    (princ "I recommend that you stand because there are no fillable categories given your current dice set.")
+                    (terpri))
+                    
+                    ; Best strategy is to stand.
+                    ((= curr-score max-score)
+                    (cond 
+                        (selection (princ "I recommend that you select the "))
+                        (t (princ "I recommend that you stand and try for the ")))
+                    (princ category-name)
+                    (princ " category because it gives the maximum possible points (")
+                    (princ curr-score)
+                    (princ ") among all the options.")
+                    (terpri))
+                    
+                    ; Best strategy is to reroll.
+                    (t
+                    (princ "I recommend that you reroll and try for the ")
+                    (princ category-name)
+                    (princ " category with ")
+                    (print-target-dice target (sum-list target))
+                    (princ "because it gives the maximum possible points (")
+                    (princ max-score)
+                    (princ ") among all the options. Therefore, ")
+                    (print-target-dice to-reroll (sum-list to-reroll))
+                    (princ "should be rerolled.")
+                    (terpri))))
+
+            ; Computer statements.
+            (t
+                (cond 
+                    ; No good strategy was found.
+                    ((null strategy)
+                    (princ "The computer plans to stand because there are no fillable categories given its current dice set.")
+                    (terpri))
+                    
+                    ; Best strategy is to stand.
+                    ((= curr-score max-score)
+                    (cond 
+                        (selection (princ "The computer will select the "))
+                        (t (princ "The computer plans to stand and try for the ")))
+                    (princ category-name)
+                    (princ " category because it gives the maximum possible points (")
+                    (princ curr-score)
+                    (princ ") among all the options.")
+                    (terpri))
+
+                    ; Best strategy is to reroll.
+                    (t
+                    (princ "The computer plans to reroll and try for the ")
+                    (princ category-name)
+                    (princ " category with ")
+                    (print-target-dice target (sum-list target))
+                    (princ "because it gives the maximum possible points (")
+                    (princ max-score)
+                    (princ ") among all the options. Therefore, ")
+                    (print-target-dice to-reroll (sum-list to-reroll))
+                    (princ "will be rerolled.")
+                    (terpri)))))))

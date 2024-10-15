@@ -33,16 +33,19 @@
 
 ; /* *********************************************************************
 ; Function Name: pursue-categories
-; Purpose: To list or validate player-input list of available categories
+; Purpose: To list the category or categories the player wants to pursue
 ; Parameters:
 ;           game-data, an object holding info on the game state
 ;           player-name, the name of the player whose turn it is
-; Return Value: nil
+;           available-categories, a list of currently available categories to choose from
+; Return Value: an updated game data object with newly determined strategy
 ; Reference: none
 ; ********************************************************************* */
-(defun list-available-categories (game-data player-name)
+(defun pursue-categories (game-data player-name available-categories)
     (let
-        ((available-categories (get-available-categories game-data)))
+        ((best-strategy (pick-strategy game-data)))
+        ; YOU ARE HERE
+        ; NEXT STEP IS TO WRITE PRINT STRATEGY FUNCTIONS AND FINISH PURSUING CATEGORIES
         
         (cond
             ; List available categories for the Computer player.

@@ -287,18 +287,18 @@
 ; ********************************************************************* */
 (defun get-category-index (category-name)
     (cond 
-        ((= category-name "Aces") 1)
-        ((= category-name "Twos") 2)
-        ((= category-name "Threes") 3)
-        ((= category-name "Fours") 4)
-        ((= category-name "Fives") 5)
-        ((= category-name "Sixes") 6)
-        ((= category-name "Three of a Kind") 7)
-        ((= category-name "Four of a Kind") 8)
-        ((= category-name "Full House") 9)
-        ((= category-name "Four Straight") 10)
-        ((= category-name "Five Straight") 11)
-        ((= category-name "Yahtzee") 12)))
+        ((equalp category-name "Aces") 1)
+        ((equalp category-name "Twos") 2)
+        ((equalp category-name "Threes") 3)
+        ((equalp category-name "Fours") 4)
+        ((equalp category-name "Fives") 5)
+        ((equalp category-name "Sixes") 6)
+        ((equalp category-name "Three of a Kind") 7)
+        ((equalp category-name "Four of a Kind") 8)
+        ((equalp category-name "Full House") 9)
+        ((equalp category-name "Four Straight") 10)
+        ((equalp category-name "Five Straight") 11)
+        ((equalp category-name "Yahtzee") 12)))
 
 ; /* *********************************************************************
 ; Function Name: update-dice
