@@ -4,6 +4,7 @@
 ;       validation.lisp
 ;       dice.lisp
 ;       strategy.lisp
+;       validation2.lisp
 ; ********************************************* */
 
 ; /* *********************************************************************
@@ -59,6 +60,39 @@
                 (validate-pursue-categories available-categories best-strategy))) 
         (update-strategy game-data best-strategy)))
 
+
+(defun handle-rerolls (game-data player-name)
+    (let*
+        ((best-strategy (get-strategy game-data))
+         (diceset (get-dice game-data))
+         (to-reroll (get-strat-to-reroll best-strategy))
+         (curr-score (get-strat-curr-score best-strategy))
+         (max-score (get-strat-max-score best-strategy)))
+
+        (cond
+            ((equalp player-name 'Computer)
+             (cond
+                ; If this is an empty strategy or current score = max score, return early (stand).
+                ((null best-strategy) diceset)
+                ((= curr-score max-score) diceset)
+                ; Otherwise, lock all the dice and return updated dice set.
+                (t
+                    (lock-other-dice diceset to-reroll))))
+            (t
+                (cond 
+                    ; If the player wants to reroll, lock the ones they want to keep.
+                    ((validate-stand-reroll best-strategy)
+                    (lock-other-dice
+                        diceset
+                        (validate-reroll 
+                            best-strategy (count-dice-faces (filter-free-dice diceset)))))
+                    ; Otherwise, do not alter the diceset.
+                    (t diceset))))))
+; then put together all the created functions into turn
+; after this, if the dice set has CHANGED, reroll
+; otherwise, do not
+; this ensures that if the player said to reroll but input (), it determines they should stand
+
 ; /* *********************************************************************
 ; Function Name: print-roll-header
 ; Purpose: Prints the header for a specific roll
@@ -90,7 +124,7 @@
                 (list-available-categories updated-game-data player-name)
             
                 
-                )))
+                ))))
 ; /* *********************************************************************
 ; Function Name: print-turn-header
 ; Purpose: Prints the header for a given turn

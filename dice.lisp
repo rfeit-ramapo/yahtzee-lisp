@@ -6,6 +6,10 @@
 ;       game-data.lisp
 ; ********************************************* */
 
+(load "utility.lisp")
+(load "validation.lisp")
+(load "game-data.lisp")
+
 ; /* *********************************************************************
 ; Function Name: print-dice
 ; Purpose: Prints the dice set that is passed in
@@ -457,3 +461,128 @@
         
         ; Combine locked dice with newly rolled dice
         (combine-dice new-rolls (filter-locked-dice dice))))
+
+; /* *********************************************************************
+; Function Name: dice-difference
+; Purpose: Gets the difference of two dice counts (counts1 - counts2) for each face
+; Parameters:
+;           counts1, the dice counts to subtract from
+;           counts2, the dice counts to subtract
+; Return Value: the difference between the two counts
+; Reference: none
+; ********************************************************************* */
+(defun dice-difference (counts1 counts2)
+    (cond 
+        ((null counts1) '())
+        (t
+            (cons 
+                (- (first counts1) (first counts2))
+                (dice-difference (rest counts1) (rest counts2))))))
+
+; /* *********************************************************************
+; Function Name: unlock-dice
+; Purpose: Unlocks all dice faces
+; Parameters:
+;           dice, the set of dice
+; Return Value: the set of dice, with all dice unlocked
+; Reference: none
+; ********************************************************************* */
+(defun unlock-dice (dice)
+    (cond
+        ((null dice) '())
+        
+        (t
+            (cons
+                (list (first (first dice)) nil)
+                (unlock-dice (rest dice))))))
+
+; /* *********************************************************************
+; Function Name: lock-die
+; Purpose: Locks the first die found of a particular face value
+; Parameters:
+;           dice, the dice set to modify
+;           lock-face, the face value to lock
+; Return Value: the updated set of dice
+; Reference: none
+; ********************************************************************* */
+(defun lock-die (dice lock-face)
+    (let*
+        ((die (first dice))
+         (face (first die))
+         (is-locked (second die)))
+         
+        (cond
+            ; Base case - start with an empty set of dice.
+            ((null dice) '())
+        
+            ; If the first dice face is correct, and unlocked:
+            ((and
+                (= face lock-face)
+                (not is-locked))
+            ; Lock the face and add it to the rest of the dice.
+             (cons (list face t) (rest dice)))
+            
+            ; Otherwise, keep searching the dice set.
+            (t (cons die (lock-die (rest dice) lock-face))))))
+
+; /* *********************************************************************
+; Function Name: lock-dice
+; Purpose: Locks dice in a set according to specified counts 
+; Parameters:
+;           dice, the dice set to modify
+;           to-lock, the counts of how many of each face to lock
+;           curr-face, an optional parameter indicating what face value to start at
+; Return Value: the updated set of dice
+; Reference: none
+; ********************************************************************* */
+(defun lock-dice (dice to-lock &optional (curr-face 1))
+    (cond
+        ; Base case - done locking to-reroll, so return dice.
+        ((null to-lock) dice)
+
+        ; If none of current face left to lock, go to next face.
+        ((= (first to-lock) 0)
+            (lock-dice dice (rest to-lock) (+ curr-face 1)))
+
+        ; Otherwise, lock die using the current face and pass recursively for next to lock.
+        (t
+            (lock-dice 
+                (lock-die dice curr-face)
+                ; Decrement the first value of to-lock because one was just locked.
+                (cons (- (first to-lock) 1) (rest to-lock))
+                curr-face))))
+
+; /* *********************************************************************
+; Function Name: lock-other-dice
+; Purpose: Locks all dice that are not to be rerolled. 
+; Parameters:
+;           dice, the dice set to modify
+;           to-reroll, counts of how many of each face to reroll
+; Return Value: the updated set of dice
+; Reference: none
+; ********************************************************************* */
+(defun lock-other-dice (dice to-reroll)
+    (let
+        ; The final locked totals are the current dice - the ones to reroll.
+        ((to-lock (dice-difference (count-dice-faces dice) to-reroll)))
+
+        ; Unlock all dice, then lock the required number.
+        (lock-dice (unlock-dice dice) to-lock)))
+
+; /* *********************************************************************
+; Function Name: faces-to-dice
+; Purpose: Converts a list of dice faces to a set of dice
+; Parameters: 
+;           face-list, a list of dice faces
+;           initial-face, an optional parameter determining where to start counting
+; Return Value: a list indicating the counts of each possible dice face [1-6]
+; Reference: none
+; ********************************************************************* */
+(defun faces-to-dice (face-list)
+    (cond 
+        ; Base case: empty dice list.
+        ((null face-list) '())
+
+        ; Recursive case: cons a new die onto the rest of the set.
+        (t (cons (list (first face-list) nil) 
+                 (faces-to-dice (rest face-list))))))

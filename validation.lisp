@@ -105,10 +105,7 @@
             (t 
             (princ "Error: Input must be 'y' or 'n'. Please try again.")
             (terpri)
-            (validate-yes-no))
-        )
-    )
-)
+            (validate-yes-no)))))
 
 ; /* *********************************************************************
 ; Function Name: open-serialization-file
@@ -203,35 +200,45 @@
 (defun validate-dice-list (dice-list num-to-roll)
     (cond
         ; If reached end of dice list, validate if input was correct length.
-        ((null dice-list) (cond ((= num-to-roll 0) t) (t nil)))
+        ((null dice-list) (cond
+            (num-to-roll (cond
+                ((= num-to-roll 0) t)
+                (t nil)))
+            (t t)))
         ; Invalid if the dice list has non-integer values, or values outside range [1,6].
         ((not (integerp (first dice-list))) nil)
         ((or (< (first dice-list) 1) (> (first dice-list) 6)) nil)
         ; Recursively check the rest of the dice list.
-        (t (validate-dice-list (rest dice-list) (- num-to-roll 1)))))
+        (t (cond
+            (num-to-roll (validate-dice-list (rest dice-list) (- num-to-roll 1)))
+            (t (validate-dice-list (rest dice-list) num-to-roll))))))
 
 ; /* *********************************************************************
 ; Function Name: validate-dice-faces
 ; Purpose: Validates input of multiple dice faces [1-6]
 ; Parameters:
-;           num-to-roll, a number representing how many dice should be rolled
+;           num-to-roll, optional parameter representing how many dice should be rolled
+;           help-allowed, optional parameter indicating if this should return if help requested
 ; Return Value: a list of validated dice faces
 ; Reference: none
 ; ********************************************************************* */
-(defun validate-dice-faces (num-to-roll)
+(defun validate-dice-faces (&optional num-to-roll help-allowed)
     (let 
         ; Get user input.
         ((input (read)))
         (cond 
+            ; If help requested and help-allowed:
+            ((and help-allowed (equalp input 'h)) 'h)
             ; Retry if invalid dice list was input.
             ((not (and (listp input) (validate-dice-list input num-to-roll)))
                 (princ "Error: Input must be a list of ")
-                (princ num-to-roll)
                 (cond 
-                    ((= num-to-roll 1) (princ " dice face (e.g. (3)). Please try again."))
-                    (t (princ " dice faces (e.g. (1 2 3)). Please try again.")))
+                    (num-to-roll (princ num-to-roll) (cond
+                        ((= num-to-roll 1) (princ " dice face (e.g. (3)). Please try again."))
+                        (t (princ " dice faces (e.g. (1 2 3)). Please try again."))))
+                    (t (princ "dice faces (e.g. (1 2 3)). Please try again.")))
                 (terpri)
-                (validate-dice-faces num-to-roll))
+                (validate-dice-faces num-to-roll help-allowed))
             (t input))))
 
 ; /* *********************************************************************
@@ -279,4 +286,3 @@
         (t (and 
             (member (first input) available-categories) 
             (validate-pursued-categories (rest input) available-categories)))))
-
