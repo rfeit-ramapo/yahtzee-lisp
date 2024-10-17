@@ -259,3 +259,24 @@
                 (validate-available-categories available-categories))
             ; Validated
             (t nil))))
+
+; /* *********************************************************************
+; Function Name: validate-pursued-categories
+; Purpose: Validates that the user input a valid subset of available categories
+; Parameters:
+;           input, a user-inputted list of categories to pursue
+;           available-categories, a list of available categories for current diceset
+; Return Value: t if the user input was valid, or nil if not
+; Reference: none
+; ********************************************************************* */
+(defun validate-pursued-categories (input available-categories)
+    (cond 
+        ; No more items in the list, so the categories were all valid.
+        ((null input) t)
+        ; Ensure the input was a list.
+        ((not (listp input)) nil)
+        ; Validate that the first input is an available category, as well as the rest.
+        (t (and 
+            (member (first input) available-categories) 
+            (validate-pursued-categories (rest input) available-categories)))))
+

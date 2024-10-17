@@ -5,10 +5,6 @@
 ;       utility.lisp
 ;       game-data.lisp
 ; ********************************************* */
-(load "utility.lisp")
-(load "validation.lisp")
-(load "game-data.lisp")
-(load "dice.lisp")
 
 ; /* *********************************************************************
 ; Function Name: get-strat-curr-score
@@ -735,6 +731,10 @@
         (check-category-strategies 
             (get-scorecard game-data)
             (get-dice game-data))))
+
+; /* *********************************************
+; Source Code to handle printing game objects
+; ********************************************* */
 
 ; /* *********************************************************************
 ; Function Name: print-target-die

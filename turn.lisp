@@ -28,7 +28,10 @@
                 (print available-categories)
             )
             ; For the Human player, validate their input.
-            (t (validate-available-categories available-categories))) 
+            (t 
+                (princ "Please list all available scorecard categories, given your current dice set.")
+                (terpri)
+                (validate-available-categories available-categories))) 
         available-categories))
 
 ; /* *********************************************************************
@@ -44,20 +47,17 @@
 (defun pursue-categories (game-data player-name available-categories)
     (let
         ((best-strategy (pick-strategy game-data)))
-        ; YOU ARE HERE
-        ; NEXT STEP IS TO WRITE PRINT STRATEGY FUNCTIONS AND FINISH PURSUING CATEGORIES
         
         (cond
-            ; List available categories for the Computer player.
-            ((equal player-name 'Computer)
-                (terpri)
-                (princ "Listing all available categories, given the dice set so far...")
-                (terpri)
-                (print available-categories)
-            )
+            ; Print chosen strategy for the Computer player.
+            ((equalp player-name 'Computer)
+                (print-strategy best-strategy 'Computer))
             ; For the Human player, validate their input.
-            (t (validate-available-categories available-categories))) 
-        nil))
+            (t 
+                (princ "Please input a list of categories you would like to pursue.")
+                (terpri)
+                (validate-pursue-categories available-categories best-strategy))) 
+        (update-strategy game-data best-strategy)))
 
 ; /* *********************************************************************
 ; Function Name: print-roll-header
