@@ -7,13 +7,6 @@
 ;       validation2.lisp
 ; ********************************************* */
 
-(load "utility.lisp")
-(load "validation.lisp")
-(load "game-data.lisp")
-(load "dice.lisp")
-(load "strategy.lisp")
-(load "validation2.lisp")
-
 ; /* *********************************************************************
 ; Function Name: list-available-categories
 ; Purpose: To list or validate player-input list of available categories
@@ -277,6 +270,9 @@
 ; ********************************************************************* */
 (defun run-turn (player-name game-data)
     (print-turn-header player-name)
-    (let
-        ((updated-game-data (handle-rolls game-data player-name)))
-        (choose-category updated-game-data player-name)))
+    (let*
+        ((updated-game-data (handle-rolls game-data player-name))
+         (updated-game-data2 (choose-category updated-game-data player-name)))
+        
+        (print-scorecard updated-game-data2)
+        updated-game-data2))

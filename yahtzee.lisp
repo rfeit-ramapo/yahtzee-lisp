@@ -7,25 +7,14 @@
 
 ; Load all files in correct order
 (load "utility.lisp")
-(load "game-data.lisp")
 (load "validation.lisp")
-(load "serialize.lisp")
+(load "game-data.lisp")
 (load "dice.lisp")
 (load "strategy.lisp")
+(load "validation2.lisp")
+(load "turn.lisp")
 (load "rounds.lisp")
-
-; /* *********************************************************************
-; Function Name: SAMPLE-FUNCTION-HEADER
-; Purpose: To return a list containing a blank scorecard to use to start games
-; Parameters:
-;             grades[], an array passed by value. It holds individual grades
-;             size, an integer. It refers to the number of students in the class
-; Return Value: The average grade in the class, a real value
-; Algorithm:
-;             1) Add all the grades
-;        2) Divide the sum by the number of students in class to calculate the average
-; Reference: none
-; ********************************************************************* */
+(load "serialize.lisp")
 
 ; /* *********************************************************************
 ; Function Name: print-instructions
@@ -47,8 +36,33 @@
     (princ "To begin the game, please press enter.")
     (terpri)
     (read-line)
-    nil
-)
+    nil)
+
+; /* *********************************************************************
+; Function Name: print-final
+; Purpose: Prints the final results of the game
+; Parameters: None
+; Return Value: nil
+; Reference: none
+; ********************************************************************* */
+(defun print-final (game-data)
+    (terpri)
+    (princ "=================================")
+    (terpri)
+    (princ "Game Complete!")
+    (terpri)
+    (terpri)
+    (print-scorecard  game-data)
+    (print-scores game-data)
+    (let* 
+        ((player-scores (get-player-scores game-data))
+        (human-score (second (first player-scores)))
+        (computer-score (second (second player-scores))))
+        
+        (cond
+            ((> human-score computer-score) (princ "You won!") (terpri))
+            ((> computer-score human-score) (princ "The computer won!" (terpri)))
+            (t (princ "It was a draw!") (terpri)))))
 
 ; /* *********************************************************************
 ; Function Name: run-tournament
@@ -61,9 +75,9 @@
     (print-instructions)
     (let ((game-data (initialize-game-data (serialize-load))))
         (print-scorecard game-data)
-    )
-    nil
-)
+        
+        (print-final (run-rounds game-data)))
+    nil)
 
 ; /* *********************************************
 ; Function calls

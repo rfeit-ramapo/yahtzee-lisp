@@ -351,3 +351,17 @@
         (t (cons 
             (first scorecard) 
             (fill-category (rest scorecard) (- category-num 1) points winner round-num)))))
+
+; /* *********************************************************************
+; Function Name: print-scores
+; Purpose: Prints the score for each player
+; Parameters:
+;           game-data, a list containing all saved data for the game
+; Return Value: nil
+; Reference: none
+; ********************************************************************* */
+(defun print-scores (game-data)
+    (princ "Scores: ")
+    (princ (get-player-scores game-data))
+    (terpri)
+    nil)

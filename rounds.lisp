@@ -3,6 +3,7 @@
 ;   -> Relies on:
 ;       game-data.lisp
 ;       dice.lisp
+;       turn.lisp
 ; ********************************************* */
 
 ; /* *********************************************************************
@@ -71,12 +72,32 @@
     (terpri)
     nil)
 
+; /* *********************************************************************
+; Function Name: run-round
+; Purpose: The function to handle running one round of a game
+; Parameters:
+;           game-data, a list containing all saved data for the game
+; Return Value: the game data after running one round of the game
+; Reference: none
+; ********************************************************************* */
 (defun run-round (game-data)
     (print-round-header (get-round-num game-data))
     
-    (let 
-        ((player-order (get-player-order game-data)))
-        ))
+    (let* 
+        ; Get the order and run the turns.
+        ((player-order (get-player-order game-data))
+        (after-turn1 (run-turn (first player-order) game-data))
+        (after-turn2 (cond 
+            ; Do not run the second turn if the game is over already.
+            ((check-scorecard-full after-turn1) after-turn1)
+            (t (run-turn (second player-order) game-data)))))
+
+        ; Print the score for each player.
+        (print-scores after-turn2)
+
+        ; Return updated game data.
+        ; insert serialization option here
+        after-turn2))
 
 ; /* *********************************************************************
 ; Function Name: run-rounds
