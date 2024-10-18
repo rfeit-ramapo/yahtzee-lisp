@@ -287,6 +287,7 @@
 ; ********************************************************************* */
 (defun get-category-index (category-name)
     (cond 
+        ((null category-name) nil)
         ((equalp category-name "Aces") 1)
         ((equalp category-name "Twos") 2)
         ((equalp category-name "Threes") 3)
@@ -331,3 +332,22 @@
         (get-scorecard game-data)
         (get-dice game-data)
         strategy))
+
+; /* *********************************************************************
+; Function Name: fill-category
+; Purpose: To fill a scorecard category with relevant information
+; Parameters:
+;           scorecard, a list of categories representing the scorecard data
+;           category-num, the index [1-12] of the category to fill
+;           points, the points earned by filling this category
+;           winner, a symbol representing the player who claimed this category
+;           round-num, the round this category was filled in
+; Return Value: the updated scorecard
+; Reference: none
+; ********************************************************************* */
+(defun fill-category (scorecard category-num points winner round-num)
+    (cond
+        ((= category-num 1) (cons (list points winner round-num) (rest scorecard)))
+        (t (cons 
+            (first scorecard) 
+            (fill-category (rest scorecard) (- category-num 1) points winner round-num)))))

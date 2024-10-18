@@ -732,10 +732,6 @@
             (get-scorecard game-data)
             (get-dice game-data))))
 
-; /* *********************************************
-; Source Code to handle printing game objects
-; ********************************************* */
-
 ; /* *********************************************************************
 ; Function Name: print-target-die
 ; Purpose: To print a string for a single target face

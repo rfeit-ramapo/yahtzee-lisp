@@ -6,10 +6,6 @@
 ;       game-data.lisp
 ; ********************************************* */
 
-(load "utility.lisp")
-(load "validation.lisp")
-(load "game-data.lisp")
-
 ; /* *********************************************************************
 ; Function Name: print-dice
 ; Purpose: Prints the dice set that is passed in
@@ -270,7 +266,7 @@
     (cond 
         ; Base case - no more replacement dice, or the dice list hit its max (5).
         ((or (null replacements) 
-             (= (list-size dice) 5))
+             (= (length dice) 5))
          dice)
         ; If the next replacement value has none left, use the next one.
         ((= (second (first replacements)) 0) (add-dice dice (rest replacements)))
@@ -480,21 +476,22 @@
                 (dice-difference (rest counts1) (rest counts2))))))
 
 ; /* *********************************************************************
-; Function Name: unlock-dice
-; Purpose: Unlocks all dice faces
+; Function Name: toggle-dice-lock
+; Purpose: Toggles all dice to be locked or unlocked
 ; Parameters:
 ;           dice, the set of dice
-; Return Value: the set of dice, with all dice unlocked
+;           toggle, a boolean: t for lock and nil for unlock
+; Return Value: the set of dice, with all dice locked/unlocked
 ; Reference: none
 ; ********************************************************************* */
-(defun unlock-dice (dice)
+(defun toggle-dice-lock (dice toggle)
     (cond
         ((null dice) '())
         
         (t
             (cons
-                (list (first (first dice)) nil)
-                (unlock-dice (rest dice))))))
+                (list (first (first dice)) toggle)
+                (toggle-dice-lock (rest dice) toggle)))))
 
 ; /* *********************************************************************
 ; Function Name: lock-die
@@ -567,7 +564,7 @@
         ((to-lock (dice-difference (count-dice-faces dice) to-reroll)))
 
         ; Unlock all dice, then lock the required number.
-        (lock-dice (unlock-dice dice) to-lock)))
+        (lock-dice (toggle-dice-lock dice nil) to-lock)))
 
 ; /* *********************************************************************
 ; Function Name: faces-to-dice

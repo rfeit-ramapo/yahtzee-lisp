@@ -15,16 +15,19 @@
           (t (+ (first l) (sum-list (rest l))))))
 
 ; /* *********************************************************************
-; Function Name: list-size
-; Purpose: Get the size (length) of a list
+; Function Name: get-value-by-index
+; Purpose: Gets a value from a list by its index (starting from 1)
 ; Parameters:
-;           l, the list to get the size of
-; Return Value: the size (length) of the passed in list
+;           index, the index to get the value at
+;           l, the list to traverse
+; Return Value: the value at the given index, or nil if out of bounds
 ; Reference: none
 ; ********************************************************************* */
-(defun list-size (l)
-    (cond ((null l) 0)
-          (t (+ 1 (list-size (rest l))))))
+(defun get-value-by-index (index l)
+    (cond 
+        ((null index) nil)
+        ((= 1 index) (first l))
+        (t (get-value-by-index (- index 1) (rest l)))))
 
 ; /* *********************************************************************
 ; Function Name: max-list
@@ -37,3 +40,4 @@
 (defun max-list (l)
     (cond ((null l) 0)
           (t (max (first l) (max-list (rest l))))))
+
