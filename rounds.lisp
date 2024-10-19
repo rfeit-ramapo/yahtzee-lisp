@@ -90,7 +90,7 @@
         (after-turn2 (cond 
             ; Do not run the second turn if the game is over already.
             ((check-scorecard-full after-turn1) after-turn1)
-            (t (run-turn (second player-order) game-data)))))
+            (t (run-turn (second player-order) after-turn1)))))
 
         ; Print the score for each player.
         (print-scores after-turn2)
@@ -112,4 +112,4 @@
         ; Return the input game data if the scorecard is full.
         ((check-scorecard-full game-data) game-data)
         ; Otherwise, recursively call function on result of single round.
-        (t (run-rounds (run-round game-data)))))
+        (t (run-rounds (increment-round (run-round game-data))))))

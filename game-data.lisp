@@ -334,6 +334,21 @@
         strategy))
 
 ; /* *********************************************************************
+; Function Name: increment-round
+; Purpose: To increase the current round number by 1
+; Parameters:
+;           game-data, a list containing all saved data for the game
+; Return Value: the updated game data
+; Reference: none
+; ********************************************************************* */
+(defun increment-round (game-data)
+    (list
+        (+ (get-round-num game-data) 1)
+        (get-scorecard game-data)
+        (get-dice game-data)
+        (get-strategy game-data)))
+
+; /* *********************************************************************
 ; Function Name: fill-category
 ; Purpose: To fill a scorecard category with relevant information
 ; Parameters:

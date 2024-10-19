@@ -26,7 +26,8 @@
                 (terpri)
                 (princ "Listing all available categories, given the dice set so far...")
                 (terpri)
-                (print available-categories)
+                (princ available-categories)
+                (terpri)
             )
             ; For the Human player, validate their input.
             (t 
@@ -45,9 +46,10 @@
 ; Return Value: an updated game data object with newly determined strategy
 ; Reference: none
 ; ********************************************************************* */
-(defun pursue-categories (game-data player-name available-categories)
+(defun pursue-categories (game-data player-name)
     (let
-        ((best-strategy (pick-strategy game-data)))
+        ((best-strategy (pick-strategy game-data))
+         (possible-categories (get-available-categories game-data nil)))
         
         (cond
             ; Print chosen strategy for the Computer player.
@@ -57,7 +59,7 @@
             (t 
                 (princ "Please input a list of categories you would like to pursue.")
                 (terpri)
-                (validate-pursue-categories available-categories best-strategy))) 
+                (validate-pursue-categories possible-categories best-strategy))) 
         (update-strategy game-data best-strategy)))
 
 ; /* *********************************************************************
@@ -81,8 +83,8 @@
             ((equalp player-name 'Computer)
              (cond
                 ; If this is an empty strategy or current score = max score, return early (stand).
-                ((null best-strategy) diceset)
-                ((= curr-score max-score) diceset)
+                ((null best-strategy) nil)
+                ((= curr-score max-score) nil)
                 ; Otherwise, lock all the dice and return updated dice set.
                 (t
                     (lock-other-dice diceset to-reroll))))
@@ -99,7 +101,7 @@
                         (validate-reroll 
                             best-strategy (count-dice-faces (filter-free-dice diceset)))))
                     ; Otherwise, do not alter the diceset.
-                    (t diceset))))))
+                    (t nil))))))
 
 ; /* *********************************************************************
 ; Function Name: print-roll-header
@@ -113,8 +115,30 @@
     (princ "=================================")
     (terpri)
     (princ "Roll ")
-    (print roll-num)
+    (princ roll-num)
+    (princ ":")
+    (terpri)
+    (terpri)
     nil)
+
+; /* *********************************************************************
+; Function Name: determine-dice-or-stand
+; Purpose: Completes post-roll questions and has the player decide what to stand,
+;           or what to reroll
+; Parameters:
+;             game-data, an object holding info on the game state
+;             player-name, the name of the player whose turn it is
+; Return Value: the updated diceset with kept dice locked, or nil if standing
+; Reference: none
+; ********************************************************************* */
+(defun determine-dice-or-stand (game-data player-name)
+    ; Make player list all currently relevant categories.
+    (list-available-categories game-data player-name)
+    ; Determine what to reroll (if anything).
+    (handle-rerolls 
+        ; Ask the player what they want to pursue.
+        (pursue-categories game-data player-name) 
+        player-name))
 
 ; /* *********************************************************************
 ; Function Name: handle-rolls
@@ -141,26 +165,28 @@
         ((or stand (> roll-num 3)) 
             (update-dice game-data (toggle-dice-lock (get-dice game-data) t)))
         (t
+            (print-roll-header roll-num)
             (let*
                 ; Update game data with new roll.
-                ((updated-game-data1 (let
+                ((updated-game-data (let
                     ((roll-result (roll-all (get-dice game-data))))
 
                     (princ "Roll Result: ")
                     (print-dice roll-result)
                     (update-dice game-data roll-result)))
-                ; Update game data again with strategy from pursue-categories.
-                 (updated-game-data2 
-                    (pursue-categories updated-game-data1 player-name
-                        (list-available-categories updated-game-data1 player-name)))
                 ; Update the dice by determining what to reroll.
-                (updated-dice (handle-rerolls updated-game-data2 player-name))
+                (updated-dice (cond
+                    ; Skip listing categories, pursuing, and rerolling on roll 3 (must stand).
+                    ((= roll-num 3) nil)
+                    (t (determine-dice-or-stand updated-game-data player-name))))
                 ; Stand if the dice did not change.
-                (stand (cond ((equalp (get-dice updated-game-data2) updated-dice) t) (t nil))))
+                (stand (cond ((null updated-dice) t) (t nil))))
                 
                 ; Recursively call the function with updated game data, roll num, and stand value.
                 (handle-rolls 
-                    (update-dice updated-game-data2 updated-dice) 
+                    (cond 
+                        (stand updated-game-data) 
+                        (t (update-dice updated-game-data updated-dice))) 
                     player-name 
                     (+ roll-num 1) 
                     stand)))))
@@ -197,7 +223,7 @@
          (diceset (get-dice game-data))
          (available-strategies (check-category-strategies scorecard diceset))
          (available-categories (get-available-categories game-data))
-         (best-strategy (get-strategy game-data))
+         (best-strategy (pick-strategy game-data))
          ; Save the current round.
          (curr-round (get-round-num game-data))
          ; Choose which category to fill.

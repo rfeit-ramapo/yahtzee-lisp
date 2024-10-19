@@ -399,7 +399,7 @@
             (terpri)
             (validate-die-face))
         ; Otherwise, generate a random value [1-6].
-        (t (+ (random 6) 1))))
+        (t (+ (random 6 (make-random-state t)) 1))))
 
 ; /* *********************************************************************
 ; Function Name: auto-roll
@@ -414,7 +414,7 @@
         ; Base case - start with an empty list if none left to roll.
         ((= 0 num-to-roll) '())
         ; Recursive case - add a randomly generated die onto the list.
-        (t (cons (+ (random 6) 1) (auto-roll (- num-to-roll 1))))))
+        (t (cons (+ (random 6 (make-random-state t)) 1) (auto-roll (- num-to-roll 1))))))
 
 ; /* *********************************************************************
 ; Function Name: combine-dice
@@ -559,12 +559,14 @@
 ; Reference: none
 ; ********************************************************************* */
 (defun lock-other-dice (dice to-reroll)
-    (let
-        ; The final locked totals are the current dice - the ones to reroll.
-        ((to-lock (dice-difference (count-dice-faces dice) to-reroll)))
+    (cond 
+        ((= (sum-list to-reroll) 0) nil)
+        (t (let
+            ; The final locked totals are the current dice - the ones to reroll.
+            ((to-lock (dice-difference (count-dice-faces dice) to-reroll)))
 
-        ; Unlock all dice, then lock the required number.
-        (lock-dice (toggle-dice-lock dice nil) to-lock)))
+            ; Unlock all dice, then lock the required number.
+            (lock-dice (toggle-dice-lock dice nil) to-lock)))))
 
 ; /* *********************************************************************
 ; Function Name: faces-to-dice

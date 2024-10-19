@@ -184,7 +184,9 @@
         (max-score (score-kind target-list kind-num)))
 
         ; Return a list representing the strategy.
-        (list current-score max-score to-reroll target name)))
+        (cond 
+            ((= 0 max-score) nil) 
+            (t (list current-score max-score to-reroll target name)))))
 
 ; /* *********************************************************************
 ; Function Name: find-streak
@@ -699,7 +701,7 @@
 ; Return Value: a filtered list of available categories
 ; Reference: none
 ; ********************************************************************* */
-(defun filter-available-strategies (strategies)
+(defun filter-available-strategies (strategies &optional (filter-relevant t))
     (cond  
         ; Start with an empty list of strategies.
         ((null strategies) '())
@@ -712,6 +714,8 @@
             (category-index (get-category-index category-name)))
             ; Only count the first 6 categories if they have at least one contributing die.
             (cond ((and 
+                    ; Only skip if filter-relevant is true (so we can still get all possible).
+                    filter-relevant
                     (<= category-index 6)
                     (= curr-score 0))
                 (filter-available-strategies (rest strategies)))
@@ -726,11 +730,12 @@
 ; Return Value: a list of available categories
 ; Reference: none
 ; ********************************************************************* */
-(defun get-available-categories (game-data)
+(defun get-available-categories (game-data &optional (filter-relevant t))
     (filter-available-strategies 
         (check-category-strategies 
             (get-scorecard game-data)
-            (get-dice game-data))))
+            (get-dice game-data)) 
+        filter-relevant))
 
 ; /* *********************************************************************
 ; Function Name: print-target-die
@@ -789,7 +794,9 @@
         (t
         (print-target-die curr-face (first dice))
         (print-target-dice 
-            (rest dice) total-dice (+ curr-face 1) (+ curr-printed (first dice)) t))))
+            (rest dice) total-dice (+ curr-face 1) (+ curr-printed (first dice)) 
+            ; Set multiple-faces to true if something was printed
+            (> curr-printed 0)))))
 
 ; /* *********************************************************************
 ; Function Name: print-strategy
