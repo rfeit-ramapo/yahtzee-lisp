@@ -131,6 +131,18 @@
 )
 
 ; /* *********************************************************************
+; Function Name: open-save-file
+; Purpose: Opens a file for saving a game based on user input
+; Parameters: None
+; Return Value: The filestream opened for writing
+; Reference: none
+; ********************************************************************* */
+(defun open-save-file ()
+    ; Open the file, overwriting anything already there.
+    (open (read-line) :direction :output :if-exists :supersede))
+
+
+; /* *********************************************************************
 ; Function Name: get-file-contents
 ; Purpose: Gets a user-provided file until the contents are valid
 ; Parameters: None

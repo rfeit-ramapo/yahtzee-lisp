@@ -95,9 +95,8 @@
         ; Print the score for each player.
         (print-scores after-turn2)
 
-        ; Return updated game data.
-        ; insert serialization option here
-        after-turn2))
+        ; Return updated game data after asking to save.
+        (serialize-save after-turn2)))
 
 ; /* *********************************************************************
 ; Function Name: run-rounds
